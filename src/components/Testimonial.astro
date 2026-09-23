@@ -247,27 +247,48 @@ const testimonials = [
 
   @media (max-width: 900px) {
     .testimonial {
-      padding: 56px 20px 40px;
+      padding: 64px 20px; /* Figma mobile */
     }
-    .testimonial__arrow--prev {
-      left: 12px;
+    /* Figma mobile : pas de flèches (swipe + points), zone d'avis de 455px
+       avec l'avis centré verticalement ; ordre étoiles → nom → citation → lien */
+    .testimonial__arrow {
+      display: none;
     }
-    .testimonial__arrow--next {
-      right: 12px;
+    .testimonial__inner {
+      gap: 20px;
     }
-    .tslide__quote {
-      font-size: var(--fs-16);
+    .testimonial__slides {
+      min-height: 455px;
+    }
+    .tslide {
+      justify-content: center;
+      gap: 24px;
     }
     .tslide__author {
-      flex-direction: column;
-      gap: 12px;
+      display: contents;
     }
     .tslide__person {
+      order: 1;
       align-items: center;
       text-align: center;
+      gap: 0;
+    }
+    .tslide__name,
+    .tslide__loc {
+      line-height: 1.5;
+    }
+    .tslide__quote {
+      order: 2;
+      line-height: 1.5;
+    }
+    .tslide__link {
+      order: 3;
     }
     .tslide__divider {
       display: none;
+    }
+    .testimonial__dots {
+      padding: 10px;
     }
   }
 </style>
@@ -288,5 +309,19 @@ const testimonials = [
     root.querySelector('.testimonial__arrow--prev')?.addEventListener('click', () => show(index - 1));
     root.querySelector('.testimonial__arrow--next')?.addEventListener('click', () => show(index + 1));
     dots.forEach((d, k) => d.addEventListener('click', () => show(k)));
+
+    // Swipe horizontal (les flèches sont masquées sur mobile)
+    let startX = 0;
+    let startY = 0;
+    const area = root.querySelector<HTMLElement>('.testimonial__slides');
+    area?.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+    area?.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) show(index + (dx < 0 ? 1 : -1));
+    }, { passive: true });
   });
 </script>

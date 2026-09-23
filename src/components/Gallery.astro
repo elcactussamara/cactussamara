@@ -101,6 +101,27 @@ const photos = [
     user-select: none;
   }
 
+  @media (max-width: 900px) {
+    .gallery {
+      padding: 56px 0 112px; /* Figma mobile — le quad se cale sur le bas de la photo */
+    }
+    .gallery__head {
+      padding-inline: 24px;
+    }
+    .gallery__track {
+      padding-inline: 24px;
+    }
+  }
+  @media (max-width: 899px) {
+    /* Figma mobile : photo pleine largeur (327×435 à 375px), plafonnée à 390px sur tablette —
+       indépendante de la hauteur d'écran, pour que le sticker quad reste calé sur son bas */
+    .gallery__item {
+      width: min(calc(100vw - 48px), 390px);
+      height: auto;
+      max-height: none;
+    }
+  }
+
   @media (min-width: 900px) {
     .gallery__title {
       font-size: var(--fs-48);

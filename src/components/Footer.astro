@@ -12,10 +12,10 @@ const hours = [
 ];
 
 const navLinks = [
-  { label: 'Home', href: '#top' },
-  { label: 'Services', href: '#services' },
-  { label: 'Availability', href: '#booking' },
-  { label: 'Find Us', href: '#contact' },
+  { label: 'Home', href: '/#top' },
+  { label: 'Services', href: '/#services' },
+  { label: 'Availability', href: '/#booking' },
+  { label: 'Find Us', href: '/#contact' },
 ];
 ---
 
@@ -39,7 +39,7 @@ const navLinks = [
             <a href="https://wa.me/50683896565" target="_blank" rel="noopener">Chat on WhatsApp</a>
           </p>
         </div>
-        <div class="footer__social">
+        <div class="footer__social footer__social--desktop">
           <a href="https://www.facebook.com/people/El-Cactus-Services/61585553481709/" target="_blank" rel="noopener" aria-label="Facebook">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M22 12a10 10 0 10-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.45 2.9h-2.35v7A10 10 0 0022 12z"/>
@@ -68,24 +68,42 @@ const navLinks = [
         </ul>
       </div>
 
-      <!-- Nav -->
-      <nav class="footer__nav">
-        {navLinks.map((l) => <a href={l.href}>{l.label}</a>)}
-      </nav>
+      <!-- Nav (+ réseaux sociaux à droite sur mobile, comme le Figma) -->
+      <div class="footer__navrow">
+        <nav class="footer__nav">
+          {navLinks.map((l) => <a href={l.href}>{l.label}</a>)}
+        </nav>
+        <div class="footer__social footer__social--mobile">
+          <a href="https://www.facebook.com/people/El-Cactus-Services/61585553481709/" target="_blank" rel="noopener" aria-label="Facebook">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M22 12a10 10 0 10-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.45 2.9h-2.35v7A10 10 0 0022 12z"/>
+            </svg>
+          </a>
+          <a href="https://www.instagram.com/elcactus_rental_samara/" target="_blank" rel="noopener" aria-label="Instagram">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.8"/>
+              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
+              <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/>
+            </svg>
+          </a>
+        </div>
+      </div>
     </div>
 
     <div class="footer__logo">
       <img src="/logos/cactus-wordmark.webp" alt="Cactus" width="968" height="238" loading="lazy" decoding="async" />
     </div>
 
+    <hr class="footer__divider" />
+
     <div class="footer__credits">
-      <p>
-        © {year} Cactus. All rights reserved. Developed by
-        <a href="https://webdiiv.com" target="_blank" rel="noopener" class="footer__dev">Webdiiv</a>
+      <p class="footer__copy">
+        © {year} Cactus. All rights reserved.
+        <span class="footer__devline">Developed by <a href="https://webdiiv.com" target="_blank" rel="noopener" class="footer__dev">Webdiiv</a></span>
       </p>
       <div class="footer__legal">
-        <a href="#">Privacy</a>
-        <a href="#">Terms of Use</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms of Use</a>
       </div>
     </div>
   </div>
@@ -220,24 +238,126 @@ const navLinks = [
     transition: color 0.15s ease;
   }
 
+  /* Desktop : la nav reste un item direct de .footer__top ; réseaux sous le contact */
+  .footer__navrow {
+    display: contents;
+  }
+  .footer__social--mobile,
+  .footer__divider {
+    display: none;
+  }
+
+  /* Mobile / tablette — Figma « Footer / 15 » (375px) */
   @media (max-width: 900px) {
     .footer {
-      padding: 48px 20px 32px;
+      padding: 80px 24px 38px; /* 38px sous le copyright, comme la maquette */
     }
     .footer__inner {
-      gap: 32px;
+      gap: 40px;
     }
     .footer__top {
       flex-direction: column;
-      gap: 32px;
+      gap: 20px;
+    }
+    .footer__col {
+      gap: 24px;
+    }
+    .footer__col:nth-child(2) {
+      gap: 4px;
+    }
+    .footer__group {
+      gap: 4px;
+    }
+    .footer__label {
+      line-height: 1.5;
+      letter-spacing: 0;
+    }
+    .footer__text {
+      font-weight: 300;
+      line-height: 1.5;
+    }
+    .footer__text a {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .footer__social--desktop {
+      display: none;
+    }
+
+    .footer__hours {
+      gap: 0;
+      padding-block: 8px;
+    }
+    .footer__hours li {
+      gap: 16px;
+      line-height: 1.5;
+    }
+    .footer__day {
+      width: 104px;
+      font-weight: 300;
+    }
+
+    /* Liens à gauche, Facebook / Instagram empilés à droite, alignés en bas */
+    .footer__navrow {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 28px; /* 48px depuis les horaires */
     }
     .footer__nav {
       align-items: flex-start;
+      gap: 0;
+      font-size: var(--fs-14);
+      line-height: 1.5;
+    }
+    .footer__nav a {
+      padding-block: 8px;
+    }
+    .footer__social--mobile {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 0;
+    }
+    .footer__social--mobile svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .footer__logo img {
+      width: 224px; /* largeur visible du logo sur la maquette */
+    }
+
+    .footer__divider {
+      display: block;
+      margin: -8px 0 -16px; /* logo → trait 32px, trait → liens 24px */
+      border: 0;
+      border-top: 1px solid var(--color-black);
     }
     .footer__credits {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 12px;
+      flex-direction: column-reverse; /* Privacy / Terms au-dessus du copyright */
+      align-items: stretch;
+      gap: 32px;
+    }
+    .footer__legal {
+      justify-content: space-between;
+      font-family: var(--font-roboto);
+      line-height: 1.5;
+    }
+    .footer__legal a {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .footer__copy {
+      font-family: var(--font-roboto);
+      line-height: 1.5;
+      text-align: center;
+    }
+    .footer__devline {
+      display: block;
+    }
+    .footer__dev {
+      text-decoration: none;
     }
   }
 </style>

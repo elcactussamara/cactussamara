@@ -50,5 +50,18 @@ const {
     <div class="page">
       <slot />
     </div>
+    <script>
+      // Arrivée depuis une autre page sur /#section (liens de la navbar / du footer des pages légales) :
+      // le navigateur ne descend pas toujours jusqu'à l'ancre (défilement doux + mise en page qui
+      // bouge pendant le chargement). On y va une fois la page chargée, sans animation.
+      if (location.hash.length > 1) {
+        window.addEventListener('load', () => {
+          const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+          if (target && Math.abs(target.getBoundingClientRect().top) > 2) {
+            target.scrollIntoView({ behavior: 'instant', block: 'start' });
+          }
+        });
+      }
+    </script>
   </body>
 </html>

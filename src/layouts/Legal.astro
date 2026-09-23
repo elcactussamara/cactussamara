@@ -1,0 +1,141 @@
+---
+// Gabarit des pages légales (/privacy, /terms) : navbar + texte + footer du site.
+import Base from './Base.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  updated: string;
+}
+
+const { title, description, updated } = Astro.props;
+---
+
+<Base title={`${title} — Cactus Sámara`} description={description}>
+  <Navbar />
+  <main class="legal">
+    <header class="legal__head">
+      <p class="legal__eyebrow">Legal</p>
+      <h1 class="legal__title">{title}</h1>
+      <p class="legal__updated">Last updated: {updated}</p>
+    </header>
+    <article class="legal__body">
+      <slot />
+    </article>
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .legal {
+    background-color: var(--color-cream);
+    padding: 96px 64px 112px;
+  }
+  .legal__head,
+  .legal__body {
+    max-width: 768px;
+    margin-inline: auto;
+  }
+  .legal__head {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 40px;
+    margin-bottom: 48px;
+    border-bottom: 1px solid var(--color-sand-line);
+  }
+  .legal__eyebrow {
+    font-family: var(--font-display);
+    font-size: var(--fs-16);
+    color: var(--color-orange);
+    text-transform: uppercase;
+  }
+  .legal__title {
+    font-family: var(--font-display);
+    font-size: var(--fs-48);
+    color: var(--color-black);
+    line-height: 1.15;
+  }
+  /* Roboto pour tout le texte : le Cocomat d'essai n'a pas de chiffres */
+  .legal__updated {
+    font-family: var(--font-roboto);
+    font-weight: 300;
+    font-size: var(--fs-14);
+    color: var(--color-taupe);
+  }
+
+  .legal__body {
+    font-family: var(--font-roboto);
+    font-weight: 300;
+    font-size: var(--fs-16);
+    line-height: 1.7;
+    color: var(--color-black);
+  }
+  .legal__body :global(h2) {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--fs-24);
+    line-height: 1.25;
+    margin: 48px 0 16px;
+  }
+  .legal__body :global(h2:first-child) {
+    margin-top: 0;
+  }
+  .legal__body :global(h3) {
+    font-family: var(--font-roboto);
+    font-weight: 400;
+    font-size: var(--fs-16);
+    margin: 24px 0 8px;
+  }
+  .legal__body :global(p + p),
+  .legal__body :global(p + ul),
+  .legal__body :global(ul + p) {
+    margin-top: 12px;
+  }
+  .legal__body :global(ul) {
+    padding-left: 20px;
+    list-style: disc;
+  }
+  .legal__body :global(li + li) {
+    margin-top: 6px;
+  }
+  .legal__body :global(strong) {
+    font-weight: 400;
+  }
+  .legal__body :global(a) {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.15s ease;
+  }
+  .legal__body :global(a:hover) {
+    color: var(--color-orange);
+  }
+  .legal__body :global(.legal__contact) {
+    margin-top: 12px;
+    padding: 20px 24px;
+    border-radius: 16px;
+    background-color: var(--color-sand);
+  }
+
+  @media (max-width: 900px) {
+    .legal {
+      padding: 56px 24px 80px;
+    }
+    .legal__head {
+      padding-bottom: 32px;
+      margin-bottom: 40px;
+    }
+    .legal__title {
+      font-size: var(--fs-40);
+    }
+    .legal__body {
+      font-size: var(--fs-16);
+    }
+    .legal__body :global(h2) {
+      font-size: var(--fs-20);
+      margin-top: 40px;
+    }
+  }
+</style>

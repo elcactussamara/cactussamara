@@ -290,6 +290,12 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
         </div>
 
         <div class="bform__action">
+          <!-- Consentement éclairé (loi CR n° 8968) — nouvel onglet pour ne pas perdre la saisie -->
+          <p class="bform__consent">
+            By sending this request, you agree to our
+            <a href="/terms" target="_blank" rel="noopener">Terms of Use</a> and
+            <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.
+          </p>
           <button type="submit" class="bform__submit textured tex-5">Request reservation</button>
         </div>
         <p class="bform__msg" data-msg hidden></p>
@@ -823,6 +829,23 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
     gap: 8px;
     padding-top: 16px;
   }
+  .bform__consent {
+    max-width: 320px;
+    font-family: var(--font-roboto);
+    font-weight: 300;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-taupe);
+  }
+  .bform__consent a {
+    color: var(--color-black);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.15s ease;
+  }
+  .bform__consent a:hover {
+    color: var(--color-orange);
+  }
   .price-pill {
     display: inline-flex;
     align-items: baseline;
@@ -990,6 +1013,11 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
       flex-direction: column;
       align-items: stretch;
       gap: 12px;
+    }
+    .bform__consent {
+      order: 1; /* sous le bouton */
+      max-width: none;
+      text-align: center;
     }
     .bform__submit {
       width: 100%;

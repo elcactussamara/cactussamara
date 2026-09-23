@@ -2,9 +2,9 @@
 import Button from './Button.astro';
 
 const links = [
-  { label: 'Services', href: '#services' },
-  { label: 'Availability', href: '#booking' },
-  { label: 'Find Us', href: '#contact' },
+  { label: 'Services', href: '/#services' },
+  { label: 'Availability', href: '/#booking' },
+  { label: 'Find Us', href: '/#contact' },
 ];
 ---
 
@@ -18,12 +18,12 @@ const links = [
       {links.map((l) => <a href={l.href}>{l.label}</a>)}
     </nav>
 
-    <a href="#top" class="navbar__logo" aria-label="Cactus — home">
+    <a href="/#top" class="navbar__logo" aria-label="Cactus — home">
       <img src="/logos/navbar-logo.webp" alt="Cactus" width="115" height="50" />
     </a>
 
     <div class="navbar__cta">
-      <Button href="#booking">Book Your Adventure</Button>
+      <Button href="/#booking">Book Your Adventure</Button>
     </div>
   </div>
 

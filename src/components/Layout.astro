@@ -134,15 +134,25 @@ const tabs = [
   }
   .sticker--cactus {
     /* à cheval Header / Layout : centre à 197,5px du bord gauche, 186,5px sous le haut de Layout */
-    width: 410px;
+    /* 410px à 1440 (Figma). Plus étroit, le texte centré se rapproche du bord gauche :
+       le sticker rétrécit plus vite que l'écran (60vw − 447px) pour ne jamais toucher
+       le titre ni le sous-titre (bord visible ≈ 83 % de la largeur de l'image). */
+    width: min(410px, calc(60vw - 447px));
     top: -18.5px;
     left: -7.5px;
     transform: rotate(6.64deg); /* Figma −6,64° */
   }
+  @media (max-width: 1100px) {
+    .sticker--cactus {
+      display: none; /* trop petit en dessous — comme sur mobile */
+    }
+  }
   .sticker--scooter {
-    /* à cheval Layout / Testimonial : centre à 209,5px du bord droit, 44px sous le bas de Layout */
-    width: 410px;
-    bottom: -225.75px;
+    /* à cheval Layout / Testimonial : centre à 209,5px du bord droit, 44px sous le bas de Layout.
+       Rétrécit sous 1440 (comme les stickers de Contact) pour ne pas couvrir les avis. */
+    --w: clamp(192px, calc(410px - (1440px - 100vw) * 0.55), 410px);
+    width: var(--w);
+    bottom: calc(-44px - var(--w) * 0.4433); /* hauteur = 0,887 × largeur */
     right: 4.5px;
     transform: rotate(-16.67deg); /* Figma +16,67° */
   }
@@ -318,10 +328,10 @@ const tabs = [
 
   @media (max-width: 900px) {
     .layout {
-      padding: 64px 20px;
+      padding: 56px 24px 112px; /* Figma mobile — le sticker scooter se cale sur ce bas */
     }
     .layout__inner {
-      gap: 40px;
+      gap: 48px;
     }
     .layout__title {
       font-size: var(--fs-40);

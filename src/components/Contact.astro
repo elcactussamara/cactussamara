@@ -86,16 +86,22 @@ const mapsEmbed = `https://www.google.com/maps?q=${mapsQuery}&z=15&output=embed`
     pointer-events: none;
     z-index: 3;
   }
+  /* 410px à 1440 (Figma). Plus étroit, le contenu centré se rapproche des bords :
+     les stickers rétrécissent (0,55px par px d'écran en moins) pour ne pas recouvrir
+     le texte ; le centre vertical reste à la même distance du bord de section. */
+  .sticker--quad,
+  .sticker--velo {
+    --w: clamp(192px, calc(410px - (1440px - 100vw) * 0.55), 410px);
+    width: var(--w);
+  }
   .sticker--quad {
     /* à cheval Gallery / Contact : centre à 201px du bord gauche, 14,5px sous le haut de Contact */
-    width: 410px;
-    top: -168px;
+    top: calc(14.5px - var(--w) * 0.4451); /* hauteur = 0,89 × largeur */
     left: -4px;
   }
   .sticker--velo {
     /* à cheval Contact / CTA : centre à 188,5px du bord droit, 125px sous le bas de Contact */
-    width: 410px;
-    bottom: -307.5px;
+    bottom: calc(-125px - var(--w) * 0.4451);
     right: -16.5px;
     transform: rotate(18.12deg); /* Figma −18,12° */
   }
@@ -216,7 +222,7 @@ const mapsEmbed = `https://www.google.com/maps?q=${mapsQuery}&z=15&output=embed`
 
   @media (max-width: 900px) {
     .contact {
-      padding: 64px 20px;
+      padding: 112px 24px; /* Figma mobile — le vélo se cale sur le bas de la carte */
     }
     .contact__inner {
       gap: 40px;
