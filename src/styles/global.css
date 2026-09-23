@@ -1,0 +1,148 @@
+/* ============================================================
+   CACTUS — Feuille de style globale
+   Polices de marque + tokens de design (charte Cactus Sámara)
+   ============================================================ */
+
+/* ---------- Polices ---------- */
+@font-face {
+  font-family: 'Gagalin';
+  src: url('/fonts/Gagalin-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cocomat';
+  src: url('/fonts/CocomatLight.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cocomat';
+  src: url('/fonts/CocomatUltralight.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- Tokens ---------- */
+:root {
+  /* Couleurs — charte Cactus */
+  --color-cream: #fbf8ef;
+  --color-green: #3c5c34;
+  --color-green-dark: #345b1a;
+  --color-orange: #de6e27;
+  --color-orange-light: #f3a145;
+  --color-amber: #ffa900;
+  --color-gray: #464646;
+  --color-gray-2: #494949;
+  --color-black: #000000;
+  --color-white: #ffffff;
+  /* Tons "sable" du module de réservation */
+  --color-sand: #f7f1e8;
+  --color-sand-line: #e7d7c5;
+  --color-taupe: #5f5a52;
+
+  /* Typographie */
+  --font-display: 'Gagalin', 'Cocomat', sans-serif;
+  --font-body: 'Cocomat', 'Segoe UI', system-ui, sans-serif;
+  /* Police d'interface lisible pour les petits textes fonctionnels
+     (calendrier, champs de formulaire) — Cocomat Light y est trop fine. */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+  /* Roboto (Google Fonts) — chiffres et champs du module de réservation, comme dans le Figma */
+  --font-roboto: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  /* Échelle typographique (issue du Figma) */
+  --fs-14: 0.875rem;
+  --fs-16: 1rem;
+  --fs-18: 1.125rem;
+  --fs-20: 1.25rem;
+  --fs-24: 1.5rem;
+  --fs-40: 2.5rem;
+  --fs-48: 3rem;
+  --fs-56: 3.5rem;
+
+  /* Layout */
+  --container-max: 1440px;
+  --content-max: 1200px;
+}
+
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  font-weight: 300;
+  color: var(--color-gray);
+  background-color: var(--color-cream);
+  line-height: 1.5;
+}
+
+/* Les stickers décoratifs débordent volontairement du bord de l'écran (comme dans le Figma) :
+   on les coupe au bord au lieu de laisser la page défiler horizontalement.
+   Sur un conteneur (et non sur body, dont l'overflow est reporté sur la fenêtre et reste
+   défilable au trackpad). `clip` (et non `hidden`) laisse les stickers déborder verticalement. */
+.page {
+  overflow-x: clip;
+}
+
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--color-black);
+}
+
+/* ---------- Utilitaires ---------- */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: 120px;
+}
+
+@media (max-width: 900px) {
+  .container {
+    padding-inline: 20px;
+  }
+}

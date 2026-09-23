@@ -1,0 +1,389 @@
+---
+import Button from './Button.astro';
+
+const tabs = [
+  {
+    id: 'atv-tour',
+    label: 'ATV Tour',
+    short: 'ATV Tour',
+    heading: 'Experience the Adventure with Our Guided ATV Tours',
+    body: "Discover Sámara's most breathtaking landscapes with a knowledgeable local guide. Ride through beaches, mountain trails, scenic backroads, and stunning viewpoints while enjoying a safe and unforgettable adventure.",
+    cta: 'Book a tour',
+    image: '/images/explore/atv-tour.jpg',
+  },
+  {
+    id: 'atv-rental',
+    label: 'ATV Rental',
+    short: 'ATV Rental',
+    heading: 'Explore Sámara at Your Own Pace',
+    body: 'Rent a reliable, well-maintained ATV and explore Sámara on your own schedule. Perfect for discovering the area’s beaches, local villages, and scenic backroads.',
+    cta: 'Book a rental',
+    image: '/images/explore/atv-rental.jpg',
+  },
+  {
+    id: 'scooter-rental',
+    label: 'Scooter Rental',
+    short: 'Scooter',
+    heading: 'Hit the Road Your Way',
+    body: 'Enjoy the freedom of riding a comfortable, well-maintained scooter as you explore Sámara, nearby villages, and the beautiful coastal roads surrounding the area.',
+    cta: 'Book a rental',
+    image: '/images/explore/scooter-rental.jpg',
+  },
+  {
+    id: 'mountain-bike-rental',
+    label: 'Mountain Bike Rental',
+    short: 'Mountain Bike',
+    heading: 'Go Beyond the Beaten Path',
+    body: "Explore Sámara's scenic trails, tropical forests, and breathtaking viewpoints on one of our mountain bikes. For a comfortable ride or a more challenging adventure, we have the perfect bike for you.",
+    cta: 'Book a rental',
+    image: null,
+  },
+];
+---
+
+<section class="layout" id="services">
+  <div class="layout__inner">
+    <div class="layout__head">
+      <h2 class="layout__title">Choose Your Way to Explore Sámara</h2>
+      <p class="layout__subtitle">
+        Whether you're looking for the freedom to explore on your own or the
+        excitement of a guided adventure, we have the perfect experience for you.
+      </p>
+    </div>
+
+    <div class="tabs">
+      <div class="tabs__menu" role="tablist">
+        {tabs.map((t, i) => (
+          <button
+            class:list={['tabs__link', { 'is-active': i === 0 }]}
+            role="tab"
+            aria-selected={i === 0 ? 'true' : 'false'}
+            data-tab={t.id}
+          >
+            <span class="tab-full">{t.label}</span>
+            <span class="tab-short">{t.short}</span>
+          </button>
+        ))}
+      </div>
+
+      <div class="tabs__content">
+        {tabs.map((t, i) => (
+          <div
+            class:list={['pane', { 'is-active': i === 0 }]}
+            role="tabpanel"
+            data-pane={t.id}
+          >
+            <div class="pane__text">
+              <h3 class="pane__heading">{t.heading}</h3>
+              <p class="pane__body">{t.body}</p>
+              <div class="pane__actions">
+                <Button href="#booking" variant="filled">{t.cta}</Button>
+                <a
+                  href="https://www.instagram.com/elcactus_rental_samara/"
+                  target="_blank"
+                  rel="noopener"
+                  class="pane__insta"
+                >
+                  See More on Instagram
+                  <svg width="8" height="14" viewBox="0 0 8 14" fill="none" aria-hidden="true">
+                    <path d="M1 1L7 7L1 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            <div class="pane__media">
+              {t.image ? (
+                <img src={t.image} alt={t.label} width="552" height="552" loading="lazy" decoding="async" />
+              ) : (
+                <div class="pane__placeholder" aria-hidden="true">
+                  <svg width="72" height="72" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5" />
+                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+                    <path d="M21 15l-5-5L5 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <img src="/images/stickers/cactus.webp" alt="" aria-hidden="true" class="sticker sticker--cactus" width="820" height="820" decoding="async" />
+  <img src="/images/stickers/scooter.webp" alt="" aria-hidden="true" class="sticker sticker--scooter" width="820" height="727" loading="lazy" decoding="async" />
+</section>
+
+<style>
+  .layout {
+    position: relative;
+    background-color: var(--color-green);
+    padding: 112px 64px;
+  }
+
+  /* Stickers décoratifs — calés sur le Figma : même taille, même rotation, et même
+     centre, mesuré depuis le bord de section qu'ils chevauchent.
+     Fichiers non tournés (la rotation est ici). Figma tourne en anti-horaire,
+     CSS en horaire : rotation CSS = −rotation Figma. */
+  .sticker {
+    position: absolute;
+    height: auto;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .sticker--cactus {
+    /* à cheval Header / Layout : centre à 197,5px du bord gauche, 186,5px sous le haut de Layout */
+    width: 410px;
+    top: -18.5px;
+    left: -7.5px;
+    transform: rotate(6.64deg); /* Figma −6,64° */
+  }
+  .sticker--scooter {
+    /* à cheval Layout / Testimonial : centre à 209,5px du bord droit, 44px sous le bas de Layout */
+    width: 410px;
+    bottom: -225.75px;
+    right: 4.5px;
+    transform: rotate(-16.67deg); /* Figma +16,67° */
+  }
+  @media (max-width: 900px) {
+    .sticker--cactus {
+      display: none; /* absent des maquettes mobiles */
+    }
+    .sticker--scooter {
+      /* maquette mobile : 192px, centre à 2,5px au-dessus du bas de Layout, 106,5px du bord droit */
+      width: 192px;
+      bottom: -83px;
+      right: 10px;
+    }
+  }
+
+  .layout__inner {
+    max-width: 1280px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+  }
+
+  .layout__head {
+    max-width: 768px;
+    margin-inline: auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .layout__title {
+    font-family: var(--font-display);
+    font-size: var(--fs-48);
+    color: var(--color-cream);
+    line-height: 1.15;
+  }
+  .layout__subtitle {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-18);
+    color: var(--color-cream);
+    line-height: 1.5;
+  }
+
+  /* Tabs */
+  .tabs {
+    background-color: var(--color-cream);
+    border-radius: 34px;
+    overflow: hidden;
+  }
+
+  .tabs__menu {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .tabs__link {
+    position: relative;
+    height: 76px;
+    padding: 24px 32px;
+    font-family: var(--font-display);
+    font-size: var(--fs-16);
+    color: var(--color-black);
+    background-color: var(--color-cream);
+    overflow: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  .tabs__link > * {
+    position: relative;
+    z-index: 1;
+  }
+  .tabs__link:hover {
+    background-color: rgba(222, 110, 39, 0.1);
+  }
+  .tabs__link.is-active {
+    background-color: transparent;
+    color: var(--color-cream);
+  }
+  /* Forme orange à bords "brush" + grain crème sur l'onglet actif (comme les boutons) */
+  .tabs__link.is-active::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('/textures/grain.svg') center / 100% 100% no-repeat,
+      var(--color-orange);
+    filter: url('#brush');
+    z-index: 0;
+    pointer-events: none;
+  }
+  .tab-short {
+    display: none;
+  }
+
+  /* Panes */
+  .tabs__content {
+    padding: 48px;
+  }
+  .pane {
+    display: none;
+    gap: 80px;
+    align-items: center;
+  }
+  .pane.is-active {
+    display: flex;
+  }
+
+  .pane__text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .pane__heading {
+    font-family: var(--font-display);
+    font-size: var(--fs-40);
+    color: var(--color-black);
+    line-height: 1.1;
+  }
+  .pane__body {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-18);
+    color: var(--color-black);
+    line-height: 1.6;
+  }
+  .pane__actions {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-top: 8px;
+  }
+  .pane__insta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-size: var(--fs-16);
+    color: var(--color-black);
+    transition: color 0.15s ease;
+  }
+  .pane__insta:hover {
+    color: var(--color-orange);
+  }
+
+  .pane__media {
+    flex-shrink: 0;
+  }
+  .pane__media img {
+    width: 552px;
+    height: 552px;
+    object-fit: cover;
+    border-radius: 24px;
+  }
+  .pane__placeholder {
+    width: 552px;
+    height: 552px;
+    border-radius: 24px;
+    background-color: #d9d9d9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a8a8a8;
+  }
+
+  /* Responsive */
+  @media (max-width: 1100px) {
+    .pane__media img,
+    .pane__placeholder {
+      width: 440px;
+      height: 440px;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .layout {
+      padding: 64px 20px;
+    }
+    .layout__inner {
+      gap: 40px;
+    }
+    .layout__title {
+      font-size: var(--fs-40);
+    }
+    .tabs {
+      border-radius: 24px;
+    }
+    .tabs__menu {
+      grid-template-columns: 1fr 1fr;
+    }
+    .tabs__link {
+      height: auto;
+      padding: 16px 12px;
+      text-align: center;
+      font-size: var(--fs-14);
+    }
+    .tab-full {
+      display: none;
+    }
+    .tab-short {
+      display: inline;
+    }
+    .tabs__content {
+      padding: 28px 20px;
+    }
+    .pane.is-active {
+      flex-direction: column;
+    }
+    .pane__heading {
+      font-size: var(--fs-24);
+    }
+    .pane__body {
+      font-size: var(--fs-16);
+    }
+    .pane__media {
+      width: 100%;
+    }
+    .pane__media img,
+    .pane__placeholder {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1;
+    }
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.layout .tabs').forEach((tabs) => {
+    const links = tabs.querySelectorAll<HTMLButtonElement>('.tabs__link');
+    const panes = tabs.querySelectorAll<HTMLElement>('.pane');
+    links.forEach((link) => {
+      link.addEventListener('click', () => {
+        const id = link.dataset.tab;
+        links.forEach((l) => {
+          const active = l === link;
+          l.classList.toggle('is-active', active);
+          l.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        panes.forEach((p) => {
+          p.classList.toggle('is-active', p.dataset.pane === id);
+        });
+      });
+    });
+  });
+</script>

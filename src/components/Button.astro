@@ -1,0 +1,84 @@
+---
+interface Props {
+  href?: string;
+  variant?: 'filled' | 'outline' | 'outline-dark';
+  class?: string;
+}
+const { href = '#', variant = 'filled', class: className = '' } = Astro.props;
+const Tag = href ? 'a' : 'button';
+// Liens externes (Instagram…) : nouvel onglet, pour ne pas faire quitter le site
+const external = href?.startsWith('http');
+---
+
+<Tag
+  href={href}
+  class={`btn btn--${variant} ${className}`}
+  target={external ? '_blank' : undefined}
+  rel={external ? 'noopener' : undefined}
+>
+  <span class="btn__label"><slot /></span>
+</Tag>
+
+<style>
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: var(--fs-16);
+    line-height: 1;
+    text-align: center;
+    padding: 12px 24px;
+    border-radius: 12px;
+    white-space: nowrap;
+    transition: transform 0.15s ease, background-color 0.15s ease, filter 0.15s ease;
+  }
+
+  .btn__label {
+    position: relative;
+    z-index: 1;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .btn--filled {
+    background-color: transparent;
+    color: var(--color-cream);
+  }
+  /* Forme orange à bords "brush" (irréguliers) + grain crème, derrière le texte */
+  .btn--filled::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: url('/textures/grain.svg') center / 100% 100% no-repeat,
+      var(--color-orange);
+    filter: url('#brush');
+    z-index: 0;
+    pointer-events: none;
+  }
+  .btn--filled:hover {
+    filter: brightness(1.05);
+  }
+
+  .btn--outline {
+    background-color: transparent;
+    color: var(--color-cream);
+    box-shadow: inset 0 0 0 2px var(--color-orange);
+  }
+  .btn--outline:hover {
+    background-color: rgba(222, 110, 39, 0.12);
+  }
+
+  .btn--outline-dark {
+    background-color: transparent;
+    color: var(--color-black);
+    box-shadow: inset 0 0 0 2px var(--color-orange);
+  }
+  .btn--outline-dark:hover {
+    background-color: rgba(222, 110, 39, 0.12);
+  }
+</style>

@@ -1,0 +1,236 @@
+---
+// Coordonnées de l'agence — à ajuster si besoin.
+const address = '100 meters west of the National Bank, C. Diego, Guanacaste Province, Sámara, 50205';
+const phoneDisplay = '8389 6565';
+const phoneLink = '+50683896565';
+const mapsQuery = encodeURIComponent('El Cactus Scooter Rental Service, Sámara, Guanacaste, Costa Rica');
+const mapsLink = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+const mapsEmbed = `https://www.google.com/maps?q=${mapsQuery}&z=15&output=embed`;
+---
+
+<section class="contact" id="contact">
+  <div class="contact__inner">
+    <div class="contact__head">
+      <h2 class="contact__title">Find Us in Sámara</h2>
+      <p class="contact__subtitle">
+        We're conveniently located in the heart of Sámara. Stop by our shop, meet
+        the team, and start your adventure.
+      </p>
+    </div>
+
+    <div class="contact__content">
+      <div class="contact__info">
+        <h3 class="contact__city">Sámara</h3>
+
+        <div class="info-item">
+          <span class="info-item__label">
+            <svg class="info-item__icon info-item__icon--pin" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 2c-3.9 0-7 3.1-7 7 0 5 7 13 7 13s7-8 7-13c0-3.9-3.1-7-7-7z" fill="currentColor"/>
+              <circle cx="12" cy="9" r="2.5" fill="var(--color-green-dark)"/>
+            </svg>
+            Address
+          </span>
+          <p class="info-item__value">{address}</p>
+        </div>
+
+        <div class="info-item">
+          <span class="info-item__label">
+            <svg class="info-item__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .8-.3 1l-2.2 2.2z" fill="currentColor"/>
+            </svg>
+            Phone
+          </span>
+          <p class="info-item__value">
+            <a href={`tel:${phoneLink}`}>{phoneDisplay}</a>
+          </p>
+        </div>
+
+        <a href={mapsLink} target="_blank" rel="noopener" class="contact__maplink">
+          Open in Google Maps
+          <svg width="7" height="12" viewBox="0 0 8 14" fill="none" aria-hidden="true">
+            <path d="M1 1l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+
+      <div class="contact__map">
+        <iframe
+          src={mapsEmbed}
+          title="Cactus location in Sámara, Costa Rica"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
+  <img src="/images/stickers/quad.webp" alt="" aria-hidden="true" class="sticker sticker--quad" width="820" height="730" loading="lazy" decoding="async" />
+  <img src="/images/stickers/velo.webp" alt="" aria-hidden="true" class="sticker sticker--velo" width="820" height="730" loading="lazy" decoding="async" />
+</section>
+
+<style>
+  .contact {
+    position: relative;
+    background-color: var(--color-green-dark);
+    padding: 112px 64px;
+  }
+
+  /* Stickers décoratifs — calés sur le Figma : même taille, même rotation, et même
+     centre, mesuré depuis le bord de section qu'ils chevauchent.
+     Fichiers non tournés (la rotation est ici). Figma tourne en anti-horaire,
+     CSS en horaire : rotation CSS = −rotation Figma. */
+  .sticker {
+    position: absolute;
+    height: auto;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .sticker--quad {
+    /* à cheval Gallery / Contact : centre à 201px du bord gauche, 14,5px sous le haut de Contact */
+    width: 410px;
+    top: -168px;
+    left: -4px;
+  }
+  .sticker--velo {
+    /* à cheval Contact / CTA : centre à 188,5px du bord droit, 125px sous le bas de Contact */
+    width: 410px;
+    bottom: -307.5px;
+    right: -16.5px;
+    transform: rotate(18.12deg); /* Figma −18,12° */
+  }
+  @media (max-width: 900px) {
+    /* Maquette mobile : stickers de 192px */
+    .sticker--quad {
+      /* centre à 135,5px au-dessus du haut de Contact (bas de la galerie) */
+      width: 192px;
+      top: -221px;
+      left: 0;
+    }
+    .sticker--velo {
+      /* centre à 115,5px au-dessus du bas de Contact, 91px du bord droit */
+      width: 192px;
+      bottom: 30px;
+      right: -5px;
+    }
+  }
+  .contact__inner {
+    max-width: 1280px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+  }
+  .contact__head {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    align-items: center;
+  }
+  .contact__title {
+    font-family: var(--font-display);
+    font-size: var(--fs-48);
+    color: var(--color-cream);
+  }
+  .contact__subtitle {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-18);
+    color: var(--color-cream);
+    line-height: 1.5;
+    max-width: 720px;
+  }
+
+  .contact__content {
+    display: grid;
+    grid-template-columns: 480px 1fr;
+    gap: 80px;
+    align-items: stretch;
+  }
+
+  .contact__info {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .contact__city {
+    font-family: var(--font-display);
+    font-size: var(--fs-24);
+    color: var(--color-cream);
+    text-transform: uppercase;
+  }
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .info-item__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-ui);
+    font-size: var(--fs-14);
+    color: rgba(251, 248, 239, 0.7);
+  }
+  .info-item__icon {
+    color: var(--color-orange);
+  }
+  .info-item__value {
+    font-family: var(--font-ui);
+    font-size: var(--fs-16);
+    color: var(--color-cream);
+    line-height: 1.5;
+  }
+  .info-item__value a:hover {
+    color: var(--color-orange-light);
+  }
+
+  .contact__maplink {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-family: var(--font-display);
+    font-size: var(--fs-16);
+    color: var(--color-cream);
+    transition: color 0.15s ease;
+  }
+  .contact__maplink:hover {
+    color: var(--color-orange-light);
+  }
+
+  .contact__map {
+    min-height: 423px;
+    background: var(--color-cream);
+    overflow: hidden;
+  }
+  .contact__map iframe {
+    width: 100%;
+    height: 100%;
+    min-height: 423px;
+    border: 0;
+    display: block;
+  }
+
+  @media (max-width: 900px) {
+    .contact {
+      padding: 64px 20px;
+    }
+    .contact__inner {
+      gap: 40px;
+    }
+    .contact__title {
+      font-size: var(--fs-40);
+    }
+    .contact__content {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+    .contact__map,
+    .contact__map iframe {
+      min-height: 300px;
+    }
+  }
+</style>

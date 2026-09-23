@@ -1,0 +1,22 @@
+# build output
+dist/
+.vercel/
+# generated types
+.astro/
+# dependencies
+node_modules/
+# logs
+npm-debug.log*
+# environment variables
+.env
+.env.production
+# macOS
+.DS_Store
+
+# fichiers de conception (gardés en local, inutiles au site)
+/Brand board Cactus/
+/Font/
+/Logo Cactus/
+/Capture d’écran*.png
+# config locale de l'éditeur
+/.claude/

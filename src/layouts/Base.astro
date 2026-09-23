@@ -1,0 +1,54 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Cactus — Quad, Moto & VTT à Sámara, Costa Rica',
+  description = "Location et tours de quad, scooter et VTT à Sámara, Costa Rica. Explorez les plages, montagnes et sentiers du Guanacaste avec Cactus.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <!-- Favicons : icône recadrée (remplit l'onglet). SVG = noir en thème clair, blanc en thème sombre. -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Roboto : chiffres du module de réservation (le Cocomat d'essai n'a pas de chiffres) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap" rel="stylesheet" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <!-- Filtre "brush" : rend les bords des formes irréguliers/peints -->
+    <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+      <defs>
+        <filter id="brush">
+          <feTurbulence type="fractalNoise" baseFrequency="0.014 0.018" numOctaves="2" seed="7" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <!-- Variantes (autre tirage de bruit) pour éviter des bords identiques d'un bouton à l'autre -->
+        <filter id="brush-2">
+          <feTurbulence type="fractalNoise" baseFrequency="0.018 0.013" numOctaves="2" seed="23" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="G" yChannelSelector="R" />
+        </filter>
+        <filter id="brush-3">
+          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.021" numOctaves="2" seed="41" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="B" />
+        </filter>
+      </defs>
+    </svg>
+    <div class="page">
+      <slot />
+    </div>
+  </body>
+</html>

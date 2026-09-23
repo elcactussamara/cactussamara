@@ -1,0 +1,292 @@
+---
+// Avis clients — carrousel.
+// 👉 Pour ajouter un avis : copier un objet dans le tableau ci-dessous.
+//    (Les vrais avis Google de l'agence viennent ici. Un seul est fourni par la maquette.)
+const testimonials = [
+  {
+    quote:
+      'Your go to ATV rental in Samara. Anthony makes the process easy and enjoyable. Recommended',
+    name: 'Tyler Prince',
+    location: 'Toronto, Canada',
+    reviewUrl: 'https://www.google.com/maps',
+  },
+  {
+    quote:
+      "I've rented from El Cactus multiple times. Fast, Friendly, Fair, equipment prices and service. They have even helped me in a time of need.... no charge... no crazy deals... just helped a customer out. Very gracious",
+    name: 'Kilroy Was Here',
+    location: 'Vancouver, Canada',
+    reviewUrl: 'https://www.google.com/maps',
+  },
+  {
+    quote:
+      'Thank you so much for this amazing experience! Had a blast and you guys were so easy to work with.',
+    name: 'Mariah Hicks',
+    location: 'Austin, USA',
+    reviewUrl: 'https://www.google.com/maps',
+  },
+];
+---
+
+<section class="testimonial">
+  {testimonials.length > 1 && (
+    <button class="testimonial__arrow testimonial__arrow--prev" aria-label="Previous review">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M10 2L4 8l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+  )}
+
+  <div class="testimonial__inner">
+    <div class="testimonial__slides">
+      {testimonials.map((t, i) => (
+        <figure class:list={['tslide', { 'is-active': i === 0 }]} data-slide={i}>
+          <div class="tslide__stars" aria-label="5 out of 5 stars">
+            {Array.from({ length: 5 }).map(() => (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2l2.9 6.26L21.5 9l-5 4.87L17.8 21 12 17.27 6.2 21l1.3-7.13-5-4.87 6.6-.74L12 2z" />
+              </svg>
+            ))}
+          </div>
+
+          <blockquote class="tslide__quote">“{t.quote}”</blockquote>
+
+          <figcaption class="tslide__author">
+            <div class="tslide__person">
+              <span class="tslide__name">{t.name}</span>
+              <span class="tslide__loc">{t.location}</span>
+            </div>
+            <span class="tslide__divider" aria-hidden="true"></span>
+            <a href={t.reviewUrl} target="_blank" rel="noopener" class="tslide__link">
+              Read the Review On Google
+              <svg width="7" height="12" viewBox="0 0 8 14" fill="none" aria-hidden="true">
+                <path d="M1 1l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </a>
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+
+    {testimonials.length > 1 && (
+      <div class="testimonial__dots">
+        {testimonials.map((_, i) => (
+          <button
+            class:list={['tdot', { 'is-active': i === 0 }]}
+            data-dot={i}
+            aria-label={`Go to review ${i + 1}`}
+          ></button>
+        ))}
+      </div>
+    )}
+  </div>
+
+  {testimonials.length > 1 && (
+    <button class="testimonial__arrow testimonial__arrow--next" aria-label="Next review">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M6 2l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+  )}
+</section>
+
+<style>
+  .testimonial {
+    position: relative;
+    background-color: var(--color-cream);
+    padding: 112px 64px 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .testimonial__inner {
+    max-width: 768px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 48px;
+  }
+
+  .testimonial__slides {
+    width: 100%;
+    display: grid;
+  }
+  /* toutes les slides superposées, seule l'active visible */
+  .tslide {
+    grid-area: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+  }
+  .tslide.is-active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .tslide__stars {
+    display: flex;
+    gap: 4px;
+    color: var(--color-amber);
+  }
+
+  .tslide__quote {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-18);
+    color: var(--color-black);
+    line-height: 1.6;
+    max-width: 600px;
+  }
+
+  .tslide__author {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .tslide__person {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    gap: 2px;
+  }
+  .tslide__name {
+    font-family: var(--font-display);
+    font-size: var(--fs-16);
+    color: var(--color-black);
+  }
+  .tslide__loc {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-16);
+    color: var(--color-black);
+  }
+  .tslide__divider {
+    width: 1px;
+    align-self: stretch;
+    background-color: var(--color-amber);
+  }
+  .tslide__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-size: var(--fs-16);
+    color: var(--color-black);
+    transition: color 0.15s ease;
+  }
+  .tslide__link:hover {
+    color: var(--color-orange);
+  }
+
+  /* Flèches */
+  .testimonial__arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: transparent;
+    color: var(--color-black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: filter 0.15s ease, transform 0.15s ease;
+  }
+  /* Cercle ambre à bords "brush" + grain crème (comme les boutons) */
+  .testimonial__arrow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: url('/textures/grain-dark.svg') center / cover no-repeat,
+      var(--color-amber);
+    filter: url('#brush');
+    z-index: 0;
+    pointer-events: none;
+  }
+  .testimonial__arrow svg {
+    position: relative;
+    z-index: 1;
+  }
+  .testimonial__arrow:hover {
+    filter: brightness(1.05);
+  }
+  .testimonial__arrow:active {
+    transform: translateY(-50%) scale(0.95);
+  }
+  .testimonial__arrow--prev {
+    left: 64px;
+  }
+  .testimonial__arrow--next {
+    right: 64px;
+  }
+
+  /* Points */
+  .testimonial__dots {
+    display: flex;
+    gap: 9px;
+  }
+  .tdot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--color-black);
+    transition: background-color 0.2s ease;
+  }
+  .tdot.is-active {
+    background-color: var(--color-orange-light);
+  }
+
+  @media (max-width: 900px) {
+    .testimonial {
+      padding: 56px 20px 40px;
+    }
+    .testimonial__arrow--prev {
+      left: 12px;
+    }
+    .testimonial__arrow--next {
+      right: 12px;
+    }
+    .tslide__quote {
+      font-size: var(--fs-16);
+    }
+    .tslide__author {
+      flex-direction: column;
+      gap: 12px;
+    }
+    .tslide__person {
+      align-items: center;
+      text-align: center;
+    }
+    .tslide__divider {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.testimonial').forEach((root) => {
+    const slides = Array.from(root.querySelectorAll<HTMLElement>('.tslide'));
+    const dots = Array.from(root.querySelectorAll<HTMLElement>('.tdot'));
+    if (slides.length <= 1) return;
+    let index = 0;
+
+    const show = (i: number) => {
+      index = (i + slides.length) % slides.length;
+      slides.forEach((s, k) => s.classList.toggle('is-active', k === index));
+      dots.forEach((d, k) => d.classList.toggle('is-active', k === index));
+    };
+
+    root.querySelector('.testimonial__arrow--prev')?.addEventListener('click', () => show(index - 1));
+    root.querySelector('.testimonial__arrow--next')?.addEventListener('click', () => show(index + 1));
+    dots.forEach((d, k) => d.addEventListener('click', () => show(k)));
+  });
+</script>

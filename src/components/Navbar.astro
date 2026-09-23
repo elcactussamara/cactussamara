@@ -1,0 +1,183 @@
+---
+import Button from './Button.astro';
+
+const links = [
+  { label: 'Services', href: '#services' },
+  { label: 'Availability', href: '#booking' },
+  { label: 'Find Us', href: '#contact' },
+];
+---
+
+<header class="navbar" id="top">
+  <div class="navbar__inner">
+    <button class="navbar__burger" aria-label="Open menu" aria-expanded="false" data-burger>
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="navbar__links">
+      {links.map((l) => <a href={l.href}>{l.label}</a>)}
+    </nav>
+
+    <a href="#top" class="navbar__logo" aria-label="Cactus — home">
+      <img src="/logos/navbar-logo.webp" alt="Cactus" width="115" height="50" />
+    </a>
+
+    <div class="navbar__cta">
+      <Button href="#booking">Book Your Adventure</Button>
+    </div>
+  </div>
+
+  <!-- Menu mobile déroulant -->
+  <div class="navbar__mobile" data-mobile-menu hidden>
+    {links.map((l) => <a href={l.href} data-mobile-link>{l.label}</a>)}
+  </div>
+</header>
+
+<style>
+  .navbar {
+    position: relative;
+    background-color: var(--color-cream);
+    height: 98px;
+    display: flex;
+    align-items: center;
+  }
+
+  .navbar__inner {
+    width: 100%;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding-inline: 64px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .navbar__links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    font-family: var(--font-display);
+    font-size: var(--fs-16);
+    color: var(--color-black);
+  }
+  .navbar__links a {
+    transition: color 0.15s ease;
+  }
+  .navbar__links a:hover {
+    color: var(--color-orange);
+  }
+
+  .navbar__logo {
+    justify-self: center;
+  }
+  .navbar__logo img {
+    width: 115px; /* 92px + 25 % */
+    height: auto;
+  }
+
+  .navbar__cta {
+    justify-self: end;
+  }
+
+  /* Hamburger — caché en desktop */
+  .navbar__burger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 28px;
+    height: 28px;
+    justify-self: start;
+  }
+  .navbar__burger span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background-color: var(--color-black);
+    transition: transform 0.25s ease, opacity 0.2s ease;
+  }
+  .navbar__burger[aria-expanded='true'] span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .navbar__burger[aria-expanded='true'] span:nth-child(2) {
+    opacity: 0;
+  }
+  .navbar__burger[aria-expanded='true'] span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  /* Menu mobile */
+  .navbar__mobile {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background-color: var(--color-cream);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    flex-direction: column;
+    padding: 12px 20px 20px;
+    gap: 4px;
+  }
+  .navbar__mobile a {
+    padding: 12px 4px;
+    font-family: var(--font-display);
+    font-size: var(--fs-18);
+    color: var(--color-black);
+  }
+  .navbar__mobile a:hover {
+    color: var(--color-orange);
+  }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 900px) {
+    .navbar {
+      height: 64px;
+    }
+    /* Maquette mobile : menu à gauche, bouton à droite, pas de logo */
+    .navbar__inner {
+      grid-template-columns: auto auto;
+      justify-content: space-between;
+      padding-inline: 24px;
+      gap: 16px;
+    }
+    .navbar__links {
+      display: none;
+    }
+    .navbar__burger {
+      display: flex;
+    }
+    .navbar__logo {
+      display: none;
+    }
+    /* Bouton compact 152×39 (Figma) */
+    .navbar__cta :global(.btn) {
+      font-size: var(--fs-14);
+      padding: 9px 8px;
+      min-height: 39px;
+    }
+    .navbar__mobile.is-open {
+      display: flex;
+    }
+  }
+</style>
+
+<script>
+  const burger = document.querySelector<HTMLButtonElement>('[data-burger]');
+  const menu = document.querySelector<HTMLElement>('[data-mobile-menu]');
+  if (burger && menu) {
+    const toggle = (open?: boolean) => {
+      const isOpen = open ?? !menu.classList.contains('is-open');
+      menu.classList.toggle('is-open', isOpen);
+      menu.hidden = !isOpen;
+      burger.setAttribute('aria-expanded', String(isOpen));
+    };
+    burger.addEventListener('click', () => toggle());
+    menu.querySelectorAll('[data-mobile-link]').forEach((a) =>
+      a.addEventListener('click', () => toggle(false))
+    );
+  }
+</script>

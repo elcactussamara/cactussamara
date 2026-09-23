@@ -1,0 +1,138 @@
+---
+import Button from './Button.astro';
+---
+
+<section class="hero">
+  <video
+    class="hero__video"
+    autoplay
+    muted
+    loop
+    playsinline
+    preload="auto"
+  >
+    <!-- Le navigateur prend la 1re source qui correspond : portrait (1080×1920) sur mobile,
+         paysage (1080×610) au-delà. Une seule vidéo est téléchargée. -->
+    <source src="/images/video-tour-quad-hero-mobile.mp4" type="video/mp4" media="(max-width: 900px)" />
+    <source src="/images/video-tour-quad-hero.mp4" type="video/mp4" />
+  </video>
+  <div class="hero__overlay"></div>
+  <div class="hero__content">
+    <h1 class="hero__title">Your Adventure Starts Here</h1>
+    <p class="hero__subtitle">
+      Explore Sámara's beaches, mountains, and scenic trails by ATV, scooter, or
+      mountain bike. Ride at your own pace or join one of our guided tours.
+    </p>
+    <div class="hero__actions">
+      <Button href="#services" variant="outline">Explore Our Services</Button>
+      <Button href="#booking" variant="filled">Book Your Adventure</Button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 808px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 64px;
+    /* Image d'attente ET de secours : 1re image de la vidéo (transition invisible).
+       Visible tant que la vidéo n'a pas d'image à afficher, ou si elle ne charge pas.
+       (Pas d'attribut poster : il n'accepte qu'une image pour toutes les tailles d'écran.) */
+    background-color: var(--color-green);
+    background-image: url('/images/hero-desktop.jpg');
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+  }
+
+  .hero__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+
+  .hero__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    /* voile noir 50 % : lisibilité du titre sur la vidéo */
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .hero__content {
+    position: relative;
+    z-index: 1;
+    max-width: 768px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .hero__title {
+    font-family: var(--font-display);
+    font-size: var(--fs-56);
+    color: var(--color-cream);
+    line-height: 1.05;
+  }
+
+  .hero__subtitle {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-18);
+    color: var(--color-cream);
+    line-height: 1.5;
+    max-width: 560px;
+    /* compense le gap de 32px : dans le Figma le texte est à 24px du titre */
+    margin-top: -8px;
+  }
+
+  .hero__actions {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  @media (max-width: 900px) {
+    .hero {
+      min-height: 748px;
+      padding: 0 24px;
+      background-image: url('/images/hero-mobile.jpg'); /* portrait, 1re image de la vidéo mobile */
+    }
+    .hero__title {
+      font-size: var(--fs-40);
+    }
+    .hero__subtitle {
+      font-size: var(--fs-16);
+    }
+    .hero__actions {
+      /* mobile : bouton plein (Book) en premier, comme la maquette mobile */
+      flex-direction: column-reverse;
+      width: 100%;
+      max-width: 360px;
+    }
+    .hero__actions :global(.btn) {
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  // Le choix de la <source> ne se fait qu'au chargement : si l'écran franchit le
+  // seuil mobile (rotation, redimensionnement), on recharge la vidéo adaptée.
+  const video = document.querySelector<HTMLVideoElement>('.hero__video');
+  const mq = window.matchMedia('(max-width: 900px)');
+  mq.addEventListener('change', () => {
+    if (!video) return;
+    video.load();
+    video.play().catch(() => {});
+  });
+</script>

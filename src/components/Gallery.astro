@@ -1,0 +1,202 @@
+---
+// Galerie photo.
+// Desktop : carrousel piloté par le scroll — la section se FIGE (sticky) et les
+//           images défilent horizontalement au fil du scroll vertical, jusqu'à la
+//           dernière photo, puis le scroll vertical reprend.
+// Mobile  : swipe tactile natif.
+// 👉 Ajouter/retirer des photos : éditer le tableau ci-dessous.
+const photos = [
+  { src: '/images/gallery/atv-tour-river.jpg', alt: 'ATV tour crossing a river near Sámara' },
+  { src: '/images/gallery/atv-tour-cow.jpg', alt: 'ATV tour on a countryside trail' },
+  { src: '/images/gallery/atv-tour-group-1.jpg', alt: 'Group ATV tour in Sámara' },
+  { src: '/images/gallery/atv-tour-group-2.jpg', alt: 'Group ATV adventure in Sámara' },
+];
+---
+
+<section class="gallery" data-gallery>
+  <div class="gallery__head">
+    <h2 class="gallery__title">See the Adventure for Yourself</h2>
+    <p class="gallery__subtitle">
+      From hidden beaches to scenic trails, discover the unforgettable moments waiting for you.
+    </p>
+  </div>
+
+  <div class="gallery__pin" data-pin>
+    <div class="gallery__sticky">
+      <div class="gallery__viewport">
+        <div class="gallery__track" data-track>
+          {photos.map((p, i) => (
+            <figure class="gallery__item">
+              <img
+                src={p.src}
+                alt={p.alt}
+                width="1206"
+                height="1608"
+                decoding="async"
+                loading={i === 0 ? 'eager' : 'lazy'}
+                draggable="false"
+              />
+            </figure>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .gallery {
+    background-color: var(--color-cream);
+    padding: 96px 0;
+  }
+
+  .gallery__head {
+    max-width: 768px;
+    margin: 0 auto 48px;
+    padding-inline: 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .gallery__title {
+    font-family: var(--font-display);
+    font-size: var(--fs-40);
+    color: var(--color-black);
+  }
+  .gallery__subtitle {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-18);
+    color: var(--color-black);
+    line-height: 1.5;
+  }
+
+  /* Défaut (mobile / no-JS) : bande à défilement horizontal natif */
+  .gallery__viewport {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .gallery__viewport::-webkit-scrollbar {
+    display: none;
+  }
+  .gallery__track {
+    display: flex;
+    gap: 16px;
+    padding-inline: 20px;
+    width: max-content;
+  }
+  .gallery__item {
+    flex: 0 0 auto;
+    height: 66vh;
+    max-height: 520px;
+    aspect-ratio: 326 / 435;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .gallery__item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    user-select: none;
+  }
+
+  @media (min-width: 900px) {
+    .gallery__title {
+      font-size: var(--fs-48);
+    }
+    .gallery__item {
+      height: 78vh;
+      max-height: 780px;
+    }
+  }
+
+  /* ---- Mode piloté par le scroll (activé en JS sur desktop) ----
+     IMPORTANT : aucun overflow:hidden sur .gallery / .gallery__pin
+     (ce sont les ancêtres du sticky : ça casserait l'épinglage).
+     Le rognage horizontal se fait sur .gallery__sticky lui-même. */
+  .gallery.is-scroll-linked .gallery__sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+  .gallery.is-scroll-linked .gallery__viewport {
+    overflow: visible;
+    width: 100%;
+  }
+  .gallery.is-scroll-linked .gallery__track {
+    padding-inline: 80px;
+    gap: 32px;
+    will-change: transform;
+  }
+  .gallery.is-scroll-linked .gallery__item {
+    height: 82vh;
+    max-height: 860px;
+  }
+</style>
+
+<script>
+  const section = document.querySelector<HTMLElement>('[data-gallery]');
+  const pin = section?.querySelector<HTMLElement>('[data-pin]');
+  const track = section?.querySelector<HTMLElement>('[data-track]');
+
+  if (section && pin && track) {
+    const desktop = window.matchMedia('(min-width: 900px)');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let maxTranslate = 0;
+    let enabled = false;
+
+    const measure = () => {
+      maxTranslate = Math.max(0, track.scrollWidth - window.innerWidth);
+      // hauteur du bloc épinglé = 100vh + distance horizontale → mapping 1:1
+      pin.style.height = enabled ? `${window.innerHeight + maxTranslate}px` : '';
+    };
+
+    const onScroll = () => {
+      if (!enabled) return;
+      const total = pin.offsetHeight - window.innerHeight;
+      const progress = total > 0
+        ? Math.min(Math.max(-pin.getBoundingClientRect().top / total, 0), 1)
+        : 0;
+      track.style.transform = `translate3d(${-progress * maxTranslate}px,0,0)`;
+    };
+
+    const enable = () => {
+      enabled = true;
+      section.classList.add('is-scroll-linked');
+      measure();
+      onScroll();
+    };
+    const disable = () => {
+      enabled = false;
+      section.classList.remove('is-scroll-linked');
+      pin.style.height = '';
+      track.style.transform = '';
+    };
+
+    const apply = () => {
+      if (desktop.matches && !reduce.matches) {
+        if (!enabled) enable();
+        else measure();
+      } else if (enabled) {
+        disable();
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', () => {
+      apply();
+      onScroll();
+    });
+    desktop.addEventListener('change', apply);
+    reduce.addEventListener('change', apply);
+    window.addEventListener('load', () => {
+      measure();
+      onScroll();
+    });
+    apply();
+  }
+</script>

@@ -1,0 +1,71 @@
+---
+import Button from './Button.astro';
+---
+
+<section class="cta">
+  <div class="cta__inner">
+    <h2 class="cta__title">Ready for Your Next Adventure?</h2>
+    <p class="cta__subtitle">
+      Book your ATV, motorcycle, mountain bike, or guided tour in just a few
+      clicks. We'll take care of the rest.
+    </p>
+    <div class="cta__actions">
+      <Button href="#booking" variant="filled">Book Your Adventure</Button>
+      <Button href="https://www.instagram.com/elcactus_rental_samara/" variant="outline-dark">See more on Instagram</Button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta {
+    background-color: var(--color-cream);
+    padding: 112px 64px;
+  }
+  .cta__inner {
+    max-width: 768px;
+    margin-inline: auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+  .cta__title {
+    font-family: var(--font-display);
+    font-size: var(--fs-56);
+    color: var(--color-black);
+    line-height: 1.1;
+  }
+  .cta__subtitle {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-18);
+    color: var(--color-black);
+    line-height: 1.5;
+    max-width: 560px;
+  }
+  .cta__actions {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  @media (max-width: 900px) {
+    .cta {
+      padding: 64px 20px;
+    }
+    .cta__title {
+      font-size: var(--fs-40);
+    }
+    .cta__actions {
+      flex-direction: column;
+      width: 100%;
+      max-width: 320px;
+    }
+    .cta__actions :global(.btn) {
+      width: 100%;
+    }
+  }
+</style>

@@ -1,0 +1,1697 @@
+---
+import { TOURS, TOUR_DEPARTURE_HOURS, toTimeOption } from '../data/tours';
+import { worcoMode } from '../lib/worco';
+
+// Module de réservation « Reserve Your Spot » — reproduit du Figma
+// (frames « Booking Calendar / dekstop|mobile /atv Tour » et « Booking Calendar / 4 | Mobile » pour les locations).
+// Locations (ATV / Scooter / VTT) → API Worco via nos routes serveur /api/quote et /api/booking
+// (la clé API reste côté serveur, voir src/lib/worco.ts). Prix « from » et totaux viennent de Worco.
+// ATV Tours → hors Worco : la demande part vers Cactus par email (/api/tour-request) ET WhatsApp (message pré-rempli).
+
+type Category = {
+  id: string;
+  label: string;
+  kind: 'tour' | 'rental';
+  overview: string;
+  /** Photo recadrée au format Figma (desktop 352×993, mobile 279×275), exportée en 2x. */
+  image: { desktop: string; mobile: string; alt: string } | null;
+  /** Précision affichée après « Number of Vehicles ». */
+  vehicleHint?: string;
+};
+
+const categories: Category[] = [
+  {
+    id: 'atv-tour',
+    label: 'ATV Tour',
+    kind: 'tour',
+    overview:
+      'A guided tour through the scenic trails of Sámara, including beach stops and breathtaking viewpoints.',
+    image: {
+      desktop: '/images/booking/atv-tour-desktop.jpg',
+      mobile: '/images/booking/atv-tour-mobile.jpg',
+      alt: 'Rider on an ATV on a jungle trail near Sámara',
+    },
+  },
+  {
+    id: 'atv-rental',
+    label: 'ATV Rental',
+    kind: 'rental',
+    vehicleHint: '2 max per vehicle',
+    overview:
+      "Rent a well-maintained ATV and explore Sámara's beaches, villages and scenic backroads at your own pace.",
+    image: {
+      desktop: '/images/booking/atv-rental-desktop.jpg',
+      mobile: '/images/booking/atv-rental-mobile.jpg',
+      alt: 'Cactus ATV parked on a hilltop overlooking the Pacific coast',
+    },
+  },
+  {
+    id: 'scooter-rental',
+    label: 'Scooter Rental',
+    kind: 'rental',
+    vehicleHint: '2 max per vehicle',
+    overview:
+      'A comfortable, reliable scooter to cruise Sámara, nearby villages and the beautiful coastal roads.',
+    image: {
+      desktop: '/images/booking/scooter-rental-desktop.jpg',
+      mobile: '/images/booking/scooter-rental-mobile.jpg',
+      alt: 'Cactus scooter parked under palm trees',
+    },
+  },
+  {
+    id: 'mountain-bike-rental',
+    label: 'Mountain Bike Rental',
+    kind: 'rental',
+    vehicleHint: '',
+    overview:
+      "Hit Sámara's scenic trails and tropical forests on a mountain bike suited to your ride.",
+    image: null, // TODO photo VTT (pas encore reçue) — sticker en attendant
+  },
+];
+
+// Tours + départs : partagés avec le serveur (src/data/tours.ts)
+const tours = TOURS;
+const departureTimes = TOUR_DEPARTURE_HOURS.map(toTimeOption);
+// Retrait des locations : 08:00 → 16:00 (fermeture 16:30)
+const pickupTimes = [8, 9, 10, 11, 12, 13, 14, 15, 16].map(toTimeOption);
+
+const first = categories[0];
+// Sans clé Worco sur le site en ligne : pas de prix de location, demandes envoyées par WhatsApp.
+// (Fixé au déploiement : après avoir ajouté la clé sur Vercel, redéployer.)
+const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
+---
+
+<section class="booking" id="booking" data-rentals={rentalsVia}>
+  <div class="booking__inner">
+    <div class="booking__head">
+      <h2 class="booking__title">Reserve Your Spot</h2>
+      <p class="booking__subtitle">
+        Planning ahead is easy. Pick your activity and preferred dates, and we'll confirm your
+        reservation as soon as possible.
+      </p>
+    </div>
+
+    <div class="booking__area">
+      <!-- Category tabs -->
+      <div class="cat-tabs" role="tablist" aria-label="Activity">
+        {categories.map((c, i) => (
+          <button
+            type="button"
+            class:list={['cat-tab', `tex-${i + 1}`, { 'is-active': i === 0 }]}
+            role="tab"
+            aria-selected={i === 0 ? 'true' : 'false'}
+            data-cat={c.id}
+            data-kind={c.kind}
+            data-overview={c.overview}
+            data-vehicle-hint={c.vehicleHint ?? ''}
+          >
+            <span>{c.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <!-- Experience card (photo + overview) -->
+      <aside class:list={['exp-card', { 'exp-card--center': first.kind === 'rental' }]} data-exp-card>
+        <div class="exp-card__media">
+          {categories.map((c, i) =>
+            c.image ? (
+              <picture class="exp-card__pic" data-cat-panel={c.id} hidden={i !== 0}>
+                <source media="(max-width: 900px)" srcset={c.image.mobile} width="558" height="550" />
+                <img
+                  src={c.image.desktop}
+                  alt={c.image.alt}
+                  width="704"
+                  height="1986"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </picture>
+            ) : (
+              <div class="exp-card__pic exp-card__pic--placeholder" data-cat-panel={c.id} hidden={i !== 0}>
+                <img src="/images/stickers/velo.webp" alt="" width="820" height="730" loading="lazy" decoding="async" />
+              </div>
+            )
+          )}
+        </div>
+        <div class="exp-card__caption">
+          <h3 class="exp-card__title">Experience Overview</h3>
+          <p class="exp-card__text" data-overview-text>{first.overview}</p>
+        </div>
+      </aside>
+
+      <!-- Reservation form -->
+      <form class="bform" data-booking-form novalidate>
+        <div class="bform__head">
+          <h3 class="bform__title">Reservation Details</h3>
+          <p class="price-pill textured tex-4" data-price-pill aria-live="polite" hidden>
+            <span class="price-pill__small" data-price-prefix>from</span>
+            <span class="price-pill__amount" data-price-amount></span>
+            <span class="price-pill__small" data-price-suffix>/ day</span>
+          </p>
+        </div>
+        <input type="hidden" name="category" data-cat-input value={first.id} />
+
+        <!-- ATV Tour -->
+        <fieldset class="bform__group" data-kind="tour" hidden={first.kind !== 'tour'} disabled={first.kind !== 'tour'}>
+          <div class="tour-select">
+            <span class="field__label">Select Tour</span>
+            <div class="tour-options">
+              {tours.map((t, i) => (
+                <label class="tour-card">
+                  <input
+                    type="radio"
+                    name="tour"
+                    value={t.id}
+                    checked={i === 0}
+                    data-price-1={t.prices[1]}
+                    data-price-2={t.prices[2]}
+                  />
+                  <span class="tour-card__head">
+                    <span class="tour-card__name">{t.name}</span>
+                    <span class={`tour-card__badge textured tex-${i + 2}`}>{t.duration}</span>
+                  </span>
+                  <span class="tour-card__stops">{t.stops}</span>
+                  <span class="tour-card__prices">
+                    <span class="tour-card__row"><span>1 rider / quad</span><span class="tour-card__price">${t.prices[1]}</span></span>
+                    <span class="tour-card__row"><span>2 riders / quad</span><span class="tour-card__price">${t.prices[2]}</span></span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div class="bform__row">
+            <label class="field">
+              <span class="field__label">Date</span>
+              <input type="text" name="date" data-date-single data-date-field="single" readonly placeholder="Pick a date" aria-haspopup="dialog" aria-expanded="false" />
+            </label>
+            <label class="field">
+              <span class="field__label"><span class="lbl-desktop">Preferred Departure Time</span><span class="lbl-mobile">Departure Time</span></span>
+              <select name="departureTime">
+                {departureTimes.map((t) => <option value={t.value}>{t.label}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <div class="bform__row">
+            <label class="field">
+              <span class="field__label">Number of Quads</span>
+              <input type="number" name="quads" value="2" min="1" inputmode="numeric" data-price-input />
+            </label>
+            <label class="field">
+              <span class="field__label">Riders per Quad</span>
+              <select name="ridersPerQuad" data-price-input>
+                <option value="1">1 rider</option>
+                <option value="2" selected>2 riders</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Rentals (ATV / Scooter / Mountain Bike) -->
+        <fieldset class="bform__group" data-kind="rental" hidden={first.kind !== 'rental'} disabled={first.kind !== 'rental'}>
+          <div class="bform__row">
+            <label class="field">
+              <span class="field__label">Start Date</span>
+              <input type="text" name="startDate" data-date-start data-date-field="start" readonly placeholder="Pick a date" aria-haspopup="dialog" aria-expanded="false" />
+            </label>
+            <label class="field">
+              <span class="field__label">End Date</span>
+              <input type="text" name="endDate" data-date-end data-date-field="end" readonly placeholder="Pick a date" aria-haspopup="dialog" aria-expanded="false" />
+            </label>
+          </div>
+
+          <div class="bform__stack">
+            <label class="field">
+              <span class="field__label">Pick-up Time</span>
+              <select name="pickupTime">
+                {pickupTimes.map((t) => <option value={t.value}>{t.label}</option>)}
+              </select>
+            </label>
+            <label class="field">
+              <span class="field__label">Number of Vehicles<span class="field__hint" data-hint-slot></span></span>
+              <input type="number" name="vehicles" value="2" min="1" inputmode="numeric" />
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Calendrier en pop-up : s'ouvre sous le champ date cliqué -->
+        <div class="calendar calendar--popover" data-calendar role="dialog" aria-label="Choose your dates" hidden>
+          <div class="calendar__header">
+            <div class="calendar__titles">
+              <h3 class="calendar__month" data-cal-month>&nbsp;</h3>
+              <p class="calendar__hint" data-cal-hint></p>
+            </div>
+            <div class="calendar__nav">
+              <button type="button" class="calendar__navbtn" data-cal-prev aria-label="Previous month">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </button>
+              <button type="button" class="calendar__navbtn" data-cal-next aria-label="Next month">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </button>
+            </div>
+          </div>
+          <div class="calendar__weekdays" aria-hidden="true">
+            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+          </div>
+          <div class="calendar__grid" data-cal-grid></div>
+        </div>
+
+        <!-- Coordonnées (requises par Worco : nom, email, téléphone) — communes à toutes les activités -->
+        <div class="bform__group bform__contact">
+          <div class="bform__row">
+            <label class="field">
+              <span class="field__label">Full Name</span>
+              <input type="text" name="name" autocomplete="name" required maxlength="120" />
+            </label>
+            <label class="field">
+              <span class="field__label">Email</span>
+              <input type="email" name="email" autocomplete="email" inputmode="email" required maxlength="160" />
+            </label>
+          </div>
+          <div class="bform__row">
+            <label class="field">
+              <span class="field__label">Phone</span>
+              <input type="tel" name="phone" autocomplete="tel" inputmode="tel" required maxlength="40" />
+            </label>
+            <label class="field">
+              <span class="field__label">WhatsApp <span class="field__optional">(optional)</span></span>
+              <input type="tel" name="whatsapp" inputmode="tel" maxlength="40" />
+            </label>
+          </div>
+          <label class="field">
+            <span class="field__label">Message <span class="field__optional">(optional)</span></span>
+            <textarea name="message" rows="3" maxlength="1000"></textarea>
+          </label>
+          <!-- Anti-spam : invisible pour les humains, rempli par les robots (rejeté côté serveur) -->
+          <div class="bform__hp" aria-hidden="true">
+            <label>Company <input type="text" name="company" tabindex="-1" autocomplete="off" /></label>
+          </div>
+        </div>
+
+        <div class="bform__action">
+          <button type="submit" class="bform__submit textured tex-5">Request reservation</button>
+        </div>
+        <p class="bform__msg" data-msg hidden></p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<style>
+  [hidden] {
+    display: none !important;
+  }
+
+  .booking {
+    background-color: var(--color-cream);
+    padding: 112px 64px;
+  }
+  .booking__inner {
+    max-width: 1280px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+  }
+
+  /* ---------- Title ---------- */
+  .booking__head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    text-align: center;
+  }
+  .booking__title {
+    font-family: var(--font-display);
+    font-size: var(--fs-48);
+    line-height: 1.2;
+    color: var(--color-black);
+  }
+  .booking__subtitle {
+    max-width: 524px;
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-18);
+    line-height: 1.5;
+    color: var(--color-black);
+  }
+
+  /* ---------- Layout : onglets + formulaire à gauche, carte photo à droite ---------- */
+  .booking__area {
+    display: grid;
+    grid-template-columns: minmax(0, 848fr) minmax(0, 400fr);
+    grid-template-areas:
+      'tabs image'
+      'form image';
+    gap: 32px;
+    align-items: start;
+  }
+  .cat-tabs { grid-area: tabs; }
+  .bform { grid-area: form; }
+  .exp-card { grid-area: image; align-self: stretch; }
+
+  /* Cartes crème bordées sable */
+  .calendar,
+  .bform,
+  .exp-card {
+    background: var(--color-cream);
+    border: 1px solid var(--color-sand-line);
+    border-radius: 24px;
+  }
+
+  /* ---------- Texture "tampon" (orange, bords brush + grain crème) ---------- */
+  .textured {
+    position: relative;
+    isolation: isolate;
+    color: var(--color-cream);
+  }
+  .textured::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    background: url('/textures/grain.svg') var(--grain-pos, center) / var(--grain-size, 100% 100%) no-repeat,
+      var(--color-orange);
+    filter: var(--tex-filter, url('#brush'));
+    transform: var(--tex-flip, none);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* Variantes de texture : bord brush, cadrage du grain et sens différents,
+     pour que deux boutons voisins n'aient jamais exactement le même "tampon". */
+  .tex-2 {
+    --tex-filter: url('#brush-2');
+    --tex-flip: scaleX(-1);
+    --grain-pos: 30% 40%;
+    --grain-size: 110% 104%;
+  }
+  .tex-3 {
+    --tex-filter: url('#brush-3');
+    --tex-flip: scaleY(-1);
+    --grain-pos: 70% 65%;
+    --grain-size: 104% 112%;
+  }
+  .tex-4 {
+    --tex-filter: url('#brush-2');
+    --tex-flip: scale(-1, -1);
+    --grain-pos: 15% 80%;
+    --grain-size: 114% 108%;
+  }
+  .tex-5 {
+    --tex-filter: url('#brush-3');
+    --tex-flip: scaleX(-1);
+    --grain-pos: 55% 20%;
+    --grain-size: 106% 116%;
+  }
+
+  /* ---------- Category tabs ---------- */
+  .cat-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    min-height: 104px;
+    background: var(--color-sand);
+    border: 1px solid var(--color-sand-line);
+    border-radius: 34px;
+    overflow: hidden;
+  }
+  .cat-tab {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 23px 32px; /* 24px Figma − 1px de bordure du conteneur */
+    background: var(--color-cream);
+    font-family: var(--font-display);
+    font-size: var(--fs-20);
+    line-height: 1.4;
+    color: var(--color-black);
+    text-align: center;
+    transition: background-color 0.2s ease;
+  }
+  .cat-tab:hover {
+    background-color: #f5ece0;
+  }
+  .cat-tab.is-active {
+    background: transparent;
+    color: var(--color-cream);
+  }
+  .cat-tab.is-active::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('/textures/grain.svg') var(--grain-pos, center) / var(--grain-size, 100% 100%) no-repeat,
+      var(--color-orange);
+    filter: var(--tex-filter, url('#brush'));
+    transform: var(--tex-flip, none);
+    z-index: -1;
+    pointer-events: none;
+  }
+  .cat-tab:focus-visible {
+    outline: 2px solid var(--color-orange);
+    outline-offset: -4px;
+  }
+
+  /* ---------- Experience card ---------- */
+  /* Paddings = Figma − 1px : les contours Figma sont "inside", ici la bordure s'ajoute */
+  .exp-card {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 23px;
+  }
+  .exp-card__media {
+    position: relative;
+    flex: 1 1 0;
+    min-height: 0;
+  }
+  .exp-card__pic,
+  .exp-card__pic img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .exp-card__pic img {
+    object-fit: cover;
+    border-radius: 12px;
+  }
+  .exp-card__pic--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-sand);
+    border-radius: 12px;
+  }
+  .exp-card__pic--placeholder img {
+    position: static;
+    width: 70%;
+    height: auto;
+    border-radius: 0;
+  }
+  .exp-card__caption {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .exp-card--center .exp-card__caption {
+    align-items: center;
+    text-align: center;
+  }
+  .exp-card__title {
+    font-family: var(--font-display);
+    font-size: var(--fs-20);
+    line-height: 1.4;
+    color: var(--color-black);
+  }
+  .exp-card__text {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-14);
+    line-height: 1.5;
+    color: var(--color-black);
+  }
+
+  /* ---------- Calendrier (pop-up sous le champ date cliqué, positionné en JS) ---------- */
+  .calendar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 19px;
+  }
+  .calendar--popover {
+    position: absolute;
+    z-index: 30;
+    width: 360px;
+    box-shadow: 0 18px 40px rgba(60, 45, 20, 0.16);
+  }
+  .calendar__titles {
+    display: flex;
+    flex-direction: column;
+  }
+  .calendar__hint {
+    font-family: var(--font-roboto);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--color-taupe);
+  }
+  .calendar__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .calendar__month {
+    font-family: var(--font-display);
+    font-size: var(--fs-20);
+    line-height: 1.4;
+    color: var(--color-black);
+  }
+  .calendar__nav {
+    display: flex;
+    gap: 8px;
+  }
+  .calendar__navbtn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-sand);
+    border: 1px solid var(--color-sand-line);
+    border-radius: 12px;
+    color: var(--color-black);
+    transition: background-color 0.15s ease, opacity 0.15s ease;
+  }
+  .calendar__navbtn:hover:not(:disabled) {
+    background: var(--color-sand-line);
+  }
+  .calendar__navbtn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .calendar__weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  .calendar__weekdays span {
+    text-align: center;
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-14);
+    line-height: 1.5;
+    color: var(--color-black);
+  }
+  .calendar__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  /* .cal-day : voir <style is:global> (cases générées en JS) */
+
+  /* ---------- Form ---------- */
+  .bform {
+    position: relative; /* repère du calendrier pop-up */
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 31px;
+  }
+  /* Titre + pastille prix à droite (passe sous le titre si la place manque) */
+  .bform__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+  }
+  .bform__title {
+    font-family: var(--font-display);
+    font-size: var(--fs-24);
+    line-height: 1.4;
+    color: var(--color-black);
+  }
+  .bform__group {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .bform__row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .bform__stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+  .field__label {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-14);
+    line-height: 1.5;
+    color: var(--color-black);
+  }
+  .field__hint:not(:empty)::before {
+    content: ' (';
+  }
+  .field__hint:not(:empty)::after {
+    content: ')';
+  }
+  /* Le chiffre du hint en Roboto Light (Cocomat d'essai sans chiffres) */
+  .field__hint {
+    font-family: var(--font-roboto);
+    font-weight: 300;
+  }
+  .lbl-mobile {
+    display: none;
+  }
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    height: 48px;
+    padding: 12px 16px;
+    background: var(--color-sand);
+    border: 1px solid var(--color-sand-line);
+    border-radius: 12px;
+    font-family: var(--font-roboto);
+    font-size: var(--fs-16);
+    line-height: 1.5;
+    color: var(--color-black);
+    -webkit-appearance: none;
+    appearance: none;
+    -moz-appearance: textfield;
+  }
+  .field input::-webkit-outer-spin-button,
+  .field input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .field input::placeholder {
+    color: var(--color-taupe);
+    opacity: 0.7;
+  }
+  .field input[readonly] {
+    cursor: pointer;
+  }
+  /* Champs date : icône calendrier = ouvre le pop-up */
+  .field input[data-date-field] {
+    padding-right: 44px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%235f5a52' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='3'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+  }
+  .field input[aria-expanded='true'] {
+    border-color: var(--color-orange);
+  }
+  .field select {
+    cursor: pointer;
+  }
+  .field input:focus-visible,
+  .field select:focus-visible,
+  .field textarea:focus-visible {
+    outline: none;
+    border-color: var(--color-orange);
+  }
+  .field textarea {
+    height: auto;
+    min-height: 96px;
+    resize: vertical;
+  }
+  /* Champ signalé par la validation */
+  .field [aria-invalid='true'] {
+    border-color: var(--color-orange);
+  }
+  .field__optional {
+    color: var(--color-taupe);
+  }
+  /* Anti-spam : hors écran (pas display:none, que certains robots détectent) */
+  .bform__hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  /* Tour cards */
+  .tour-select {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .tour-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .tour-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 15px;
+    background: var(--color-sand);
+    border: 1px solid var(--color-sand-line);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .tour-card:hover {
+    border-color: #d9bfa3;
+  }
+  .tour-card:has(input:checked) {
+    border-color: var(--color-orange);
+  }
+  .tour-card:has(input:focus-visible) {
+    outline: 2px solid var(--color-orange);
+    outline-offset: 2px;
+  }
+  .tour-card input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .tour-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 37px;
+    gap: 12px;
+  }
+  .tour-card__name {
+    font-family: var(--font-display);
+    font-size: var(--fs-18);
+    line-height: 1.4;
+    color: var(--color-black);
+  }
+  .tour-card__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 66px;
+    height: 25px;
+    padding-inline: 12px;
+    font-family: var(--font-display);
+    font-size: var(--fs-16);
+    line-height: 1.5;
+  }
+  .tour-card__stops {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-14);
+    line-height: 1.5;
+    color: var(--color-taupe);
+  }
+  .tour-card__prices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: auto;
+  }
+  .tour-card__row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    height: 24px;
+    font-family: var(--font-roboto);
+    font-size: var(--fs-14);
+    line-height: 1.5;
+    color: var(--color-black);
+  }
+  .tour-card__price {
+    font-size: var(--fs-16);
+  }
+
+  /* Action row */
+  .bform__action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 16px;
+  }
+  .price-pill {
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 7px;
+    height: 51px;
+    padding: 5px 23px 0;
+    font-family: var(--font-display);
+    white-space: nowrap;
+  }
+  .price-pill__small {
+    font-size: var(--fs-14);
+    line-height: 1.2;
+  }
+  .price-pill__amount {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+  .bform__submit {
+    margin-left: auto;
+    height: 51px;
+    padding: 0 28px;
+    font-family: var(--font-display);
+    font-size: var(--fs-16);
+    line-height: 1.5;
+    white-space: nowrap;
+    transition: transform 0.15s ease, filter 0.15s ease;
+  }
+  .bform__submit:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+  }
+  .bform__submit:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 3px;
+  }
+  .bform__submit:disabled {
+    opacity: 0.6;
+    cursor: progress;
+    transform: none;
+  }
+  .price-pill.is-loading .price-pill__amount {
+    opacity: 0.5;
+  }
+  .bform__msg {
+    font-family: var(--font-roboto);
+    font-size: var(--fs-14);
+    line-height: 1.5;
+    color: var(--color-green-dark);
+  }
+  .bform__msg.is-error {
+    color: var(--color-orange);
+  }
+
+  /* ---------- Écrans intermédiaires ---------- */
+  @media (max-width: 1200px) {
+    .booking {
+      padding-inline: 40px;
+    }
+    .cat-tab {
+      padding: 20px 12px;
+      font-size: var(--fs-16);
+    }
+  }
+
+  /* ---------- Mobile (Figma 375) ---------- */
+  @media (max-width: 900px) {
+    .booking {
+      padding: 56px 24px;
+    }
+    .booking__inner {
+      gap: 40px;
+    }
+    .booking__head {
+      gap: 20px;
+    }
+    .booking__title {
+      font-size: 2.375rem;
+    }
+    .booking__subtitle {
+      font-size: var(--fs-16);
+    }
+
+    .booking__area {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: 'tabs' 'image' 'form';
+      gap: 40px;
+    }
+
+    /* Tabs 2×2 avec séparateurs */
+    .cat-tabs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      min-height: 0;
+    }
+    .cat-tab {
+      padding: 20px 16px;
+      font-size: var(--fs-20);
+    }
+    .cat-tab:nth-child(odd) {
+      border-right: 1px solid var(--color-sand-line);
+    }
+    .cat-tab:nth-child(n + 3) {
+      border-top: 1px solid var(--color-sand-line);
+    }
+    /* compense les bordures (contours "inside" dans Figma) → hauteur 164 */
+    .cat-tab:nth-child(-n + 2) {
+      padding-top: 19px;
+    }
+    .cat-tab:nth-child(n + 3) {
+      padding-top: 19px;
+      padding-bottom: 19px;
+    }
+
+    /* Carte photo */
+    .exp-card {
+      align-self: start;
+    }
+    .exp-card__media {
+      flex: none;
+      aspect-ratio: 279 / 275;
+      max-height: 440px;
+    }
+    .exp-card--center .exp-card__caption {
+      align-items: stretch;
+      text-align: left;
+    }
+    .exp-card__text {
+      font-family: var(--font-roboto);
+      font-weight: 400;
+    }
+
+    .bform {
+      padding: 23px;
+    }
+    .calendar {
+      padding: 15px;
+    }
+    /* Champs date étroits (132px) : pas d'icône, comme la maquette mobile, sinon la date est tronquée */
+    .field input[data-date-field] {
+      padding-right: 16px;
+      background-image: none;
+    }
+    .cat-tab {
+      padding-block: 20px;
+    }
+    .calendar__weekdays span,
+    .field__label,
+    .tour-card__stops {
+      font-family: var(--font-roboto);
+      font-weight: 400;
+    }
+    .lbl-desktop {
+      display: none;
+    }
+    .lbl-mobile {
+      display: inline;
+    }
+
+    .tour-options,
+    .bform__contact .bform__row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .bform__action {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+    .bform__submit {
+      width: 100%;
+      height: 52px;
+      margin-left: 0;
+    }
+  }
+</style>
+
+<!-- Cases du calendrier générées en JS : hors de portée des styles scoped d'Astro. -->
+<style is:global>
+  .calendar .cal-day {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-sand);
+    border: 0;
+    border-right: 1px solid var(--color-sand-line);
+    border-bottom: 1px solid var(--color-sand-line);
+    font-family: var(--font-roboto);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--color-black);
+    cursor: pointer;
+    transition: background-color 0.12s ease, color 0.12s ease;
+  }
+  .calendar .cal-day:not(:disabled):hover {
+    background: var(--color-sand-line);
+  }
+  .calendar .cal-day:disabled {
+    color: rgba(0, 0, 0, 0.28);
+    cursor: not-allowed;
+  }
+  .calendar .cal-day--in-range {
+    background: #f6dcc8;
+  }
+  .calendar .cal-day--selected,
+  .calendar .cal-day--selected:not(:disabled):hover {
+    background: var(--color-orange);
+    color: var(--color-cream);
+  }
+  .calendar .cal-day:focus-visible {
+    outline: 2px solid var(--color-orange);
+    outline-offset: -2px;
+  }
+  /* Coins de la grille arrondis à 12px : même rayon que la photo de la card
+     "Experience Overview", placée dans le même cas (card r24 + marge ≥ 24px, où la
+     formule rayon interne = rayon externe − marge donnerait ≤ 0). La grille ne contient
+     que les cases → 7e = fin de la 1re ligne, 7e avant-dernière = début de la dernière. */
+  .calendar .cal-day:first-child {
+    border-top-left-radius: 12px;
+  }
+  .calendar .cal-day:nth-child(7) {
+    border-top-right-radius: 12px;
+  }
+  .calendar .cal-day:nth-last-child(7) {
+    border-bottom-left-radius: 12px;
+  }
+  .calendar .cal-day:last-child {
+    border-bottom-right-radius: 12px;
+  }
+  .calendar--popover .cal-day {
+    height: 40px;
+  }
+  @media (max-width: 900px) {
+    .calendar--popover .cal-day {
+      height: 36px;
+    }
+  }
+</style>
+
+<script>
+  type Kind = 'tour' | 'rental';
+  type ApiResult = { ok: boolean; mock?: boolean; error?: string; code?: string; [k: string]: unknown };
+
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  /** WhatsApp de l'agence : les demandes d'ATV Tour (hors Worco) y sont envoyées. */
+  const CACTUS_WHATSAPP = '50683896565';
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+  document.querySelectorAll<HTMLElement>('.booking').forEach((root) => {
+    const $ = <T extends Element>(sel: string) => root.querySelector<T>(sel);
+
+    const tabs = root.querySelectorAll<HTMLButtonElement>('.cat-tab');
+    const panels = root.querySelectorAll<HTMLElement>('[data-cat-panel]');
+    const expCard = $<HTMLElement>('[data-exp-card]');
+    const overviewText = $<HTMLElement>('[data-overview-text]');
+    const catInput = $<HTMLInputElement>('[data-cat-input]');
+    const groups = root.querySelectorAll<HTMLFieldSetElement>('fieldset[data-kind]');
+    const vehicleHint = $<HTMLElement>('[data-hint-slot]');
+
+    const grid = $<HTMLElement>('[data-cal-grid]');
+    const monthLabel = $<HTMLElement>('[data-cal-month]');
+    const prevBtn = $<HTMLButtonElement>('[data-cal-prev]');
+    const nextBtn = $<HTMLButtonElement>('[data-cal-next]');
+    const dateSingle = $<HTMLInputElement>('[data-date-single]');
+    const dateStart = $<HTMLInputElement>('[data-date-start]');
+    const dateEnd = $<HTMLInputElement>('[data-date-end]');
+
+    const form = $<HTMLFormElement>('[data-booking-form]');
+    const pill = $<HTMLElement>('[data-price-pill]');
+    const pricePrefix = $<HTMLElement>('[data-price-prefix]');
+    const priceAmount = $<HTMLElement>('[data-price-amount]');
+    const priceSuffix = $<HTMLElement>('[data-price-suffix]');
+    const submitBtn = $<HTMLButtonElement>('.bform__submit');
+    const msg = $<HTMLElement>('[data-msg]');
+    if (!grid || !monthLabel || !form || !msg) return;
+
+    let kind: Kind = (tabs[0]?.dataset.kind as Kind) || 'tour';
+    /** Site en ligne sans Worco : locations sans prix, envoyées par WhatsApp (attribut posé au build). */
+    const rentalsViaWhatsApp = () => root.dataset.rentals === 'whatsapp';
+    const field = <T extends HTMLElement = HTMLInputElement>(name: string) => form.querySelector<T>(`[name="${name}"]`);
+
+    /* ---------- Messages ---------- */
+    // `source` distingue un avertissement de disponibilité (effacé quand ça redevient bon)
+    // d'un message d'envoi (conservé).
+    function showMsg(text: string, type: 'error' | 'success', source: 'quote' | 'submit' = 'submit', link?: { href: string; label: string }) {
+      msg!.textContent = text;
+      if (link) {
+        const a = document.createElement('a');
+        a.href = link.href;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.textContent = link.label;
+        a.style.textDecoration = 'underline';
+        msg!.append(' ', a);
+      }
+      msg!.classList.toggle('is-error', type === 'error');
+      msg!.dataset.source = source;
+      msg!.hidden = false;
+    }
+    function clearMsg(source?: 'quote' | 'submit') {
+      if (!source || msg!.dataset.source === source) msg!.hidden = true;
+    }
+
+    /* ---------- Calendar ---------- */
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const firstMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    let view = new Date(firstMonth);
+    const sel: { start: Date | null; end: Date | null } = { start: null, end: null };
+
+    const fmt = (d: Date) => `${MONTHS[d.getMonth()].slice(0, 3)} ${String(d.getDate()).padStart(2, '0')}, ${d.getFullYear()}`;
+    const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const same = (a: Date | null, b: Date) => !!a && a.getTime() === b.getTime();
+
+    function render() {
+      const year = view.getFullYear();
+      const month = view.getMonth();
+      monthLabel!.textContent = `${MONTHS[month]} ${year}`;
+      if (prevBtn) prevBtn.disabled = view <= firstMonth;
+
+      const offset = (new Date(year, month, 1).getDay() + 6) % 7; // lundi = 0
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const cells = Math.ceil((offset + daysInMonth) / 7) * 7;
+
+      grid!.innerHTML = '';
+      for (let i = 0; i < cells; i++) {
+        const d = new Date(year, month, 1 - offset + i);
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'cal-day';
+        cell.textContent = String(d.getDate());
+        cell.setAttribute('aria-label', fmt(d));
+        if (d < today) cell.disabled = true;
+        const selected = same(sel.start, d) || same(sel.end, d);
+        if (selected) cell.classList.add('cal-day--selected');
+        cell.setAttribute('aria-pressed', String(selected));
+        if (sel.start && sel.end && d > sel.start && d < sel.end) cell.classList.add('cal-day--in-range');
+        cell.addEventListener('click', (e) => pick(d, e.detail === 0));
+        grid!.appendChild(cell);
+      }
+    }
+
+    function syncDateFields() {
+      if (dateSingle) dateSingle.value = sel.start ? fmt(sel.start) : '';
+      if (dateStart) dateStart.value = sel.start ? fmt(sel.start) : '';
+      if (dateEnd) dateEnd.value = sel.end ? fmt(sel.end) : '';
+    }
+
+    /* ---------- Calendrier pop-up ---------- */
+    type DateField = 'single' | 'start' | 'end';
+    const popover = $<HTMLElement>('[data-calendar]');
+    const hint = $<HTMLElement>('[data-cal-hint]');
+    const dateInputs: Record<DateField, HTMLInputElement | null> = { single: dateSingle, start: dateStart, end: dateEnd };
+    const HINTS: Record<DateField, string> = {
+      single: 'Select your tour date',
+      start: 'Select your pick-up date',
+      end: 'Select your return date',
+    };
+    let active: DateField | null = null;
+    const monthOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+
+    function setActive(field: DateField) {
+      active = field;
+      if (hint) hint.textContent = HINTS[field];
+      (Object.keys(dateInputs) as DateField[]).forEach((k) => dateInputs[k]?.setAttribute('aria-expanded', String(k === field)));
+    }
+
+    /** Sous le champ actif, calé dans la largeur du formulaire. */
+    function positionPicker() {
+      if (!popover || !active) return;
+      const input = dateInputs[active];
+      if (!input) return;
+      const fr = form!.getBoundingClientRect();
+      const ir = input.getBoundingClientRect();
+      const cs = getComputedStyle(form!);
+      const inset = parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth);
+      const width = Math.min(360, fr.width - 2 * inset);
+      const left = Math.min(Math.max(ir.left - fr.left, inset), fr.width - inset - width);
+      popover.style.width = `${width}px`;
+      popover.style.left = `${left}px`;
+      popover.style.top = `${ir.bottom - fr.top + 8}px`;
+    }
+
+    function focusDayCell() {
+      (grid!.querySelector<HTMLButtonElement>('.cal-day--selected:not(:disabled)') || grid!.querySelector<HTMLButtonElement>('.cal-day:not(:disabled)'))?.focus();
+    }
+
+    function openPicker(field: DateField, viaKeyboard = false) {
+      if (!popover) return;
+      if (field === 'end' && !sel.start) field = 'start'; // d'abord le départ
+      setActive(field);
+      const ref = field === 'end' ? (sel.end ?? sel.start) : sel.start;
+      view = ref ? monthOf(ref) : new Date(firstMonth);
+      if (view < firstMonth) view = new Date(firstMonth);
+      popover.hidden = false;
+      render();
+      positionPicker();
+      if (viaKeyboard) focusDayCell();
+    }
+
+    function closePicker(returnFocus = false) {
+      if (!popover || popover.hidden) return;
+      const input = active ? dateInputs[active] : null;
+      popover.hidden = true;
+      active = null;
+      Object.values(dateInputs).forEach((el) => el?.setAttribute('aria-expanded', 'false'));
+      if (returnFocus) input?.focus();
+    }
+
+    function pick(d: Date, viaKeyboard = false) {
+      // Tour : une seule date
+      if (kind === 'tour' || active === 'single') {
+        sel.start = d;
+        sel.end = null;
+        syncDateFields();
+        closePicker(viaKeyboard);
+        updatePrice();
+        return;
+      }
+      // Location — date de départ : on enchaîne sur la date de retour (sauf si elle reste valable)
+      if (active === 'start' || !sel.start) {
+        sel.start = d;
+        const endStillValid = !!sel.end && sel.end >= d;
+        if (!endStillValid) sel.end = null;
+        syncDateFields();
+        updatePrice();
+        if (endStillValid) return closePicker(viaKeyboard);
+        setActive('end');
+        render();
+        positionPicker();
+        if (viaKeyboard) focusDayCell();
+        return;
+      }
+      // Location — date de retour (même jour possible : location à la journée)
+      if (d < sel.start) {
+        sel.start = d; // clic avant le départ : devient le nouveau départ, on attend toujours le retour
+        sel.end = null;
+        syncDateFields();
+        render();
+        updatePrice();
+        if (viaKeyboard) focusDayCell();
+        return;
+      }
+      sel.end = d;
+      syncDateFields();
+      closePicker(viaKeyboard);
+      updatePrice();
+    }
+
+    prevBtn?.addEventListener('click', () => {
+      view = new Date(view.getFullYear(), view.getMonth() - 1, 1);
+      render();
+    });
+    nextBtn?.addEventListener('click', () => {
+      view = new Date(view.getFullYear(), view.getMonth() + 1, 1);
+      render();
+    });
+
+    // Ouverture : clic sur un champ date (au clavier : Entrée / Espace / ↓, gérés plus bas)
+    (Object.keys(dateInputs) as DateField[]).forEach((k) => dateInputs[k]?.addEventListener('click', () => openPicker(k)));
+    // Fermeture : clic à côté, Échap, ou focus qui sort du calendrier (navigation au clavier)
+    document.addEventListener('pointerdown', (e) => {
+      if (!active) return;
+      const t = e.target as Node;
+      if (popover!.contains(t) || Object.values(dateInputs).includes(t as HTMLInputElement)) return;
+      closePicker();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && active) {
+        e.preventDefault();
+        closePicker(true);
+      }
+    });
+    popover?.addEventListener('focusout', (e) => {
+      const next = e.relatedTarget as Node | null;
+      if (next && !popover.contains(next) && !Object.values(dateInputs).includes(next as HTMLInputElement)) closePicker();
+    });
+    window.addEventListener('resize', positionPicker);
+
+    /* ---------- Price pill ---------- */
+    function setPill(prefix: string, amount: string, suffix: string | null, loading = false) {
+      if (!pill || !priceAmount || !pricePrefix || !priceSuffix) return;
+      pricePrefix.textContent = prefix;
+      priceAmount.textContent = amount;
+      priceSuffix.textContent = suffix ?? '';
+      priceSuffix.hidden = !suffix;
+      pill.classList.toggle('is-loading', loading);
+      pill.hidden = false;
+    }
+    const hidePill = () => pill && (pill.hidden = true);
+
+    // --- Tour : prix de la grille affichée (hors Worco) ---
+    function tourTotal() {
+      const tour = form!.querySelector<HTMLInputElement>('input[name="tour"]:checked');
+      const riders = field<HTMLSelectElement>('ridersPerQuad')?.value || '1';
+      const quads = Math.max(1, parseInt(field('quads')?.value || '1', 10) || 1);
+      return Number(tour?.getAttribute(`data-price-${riders}`) || 0) * quads;
+    }
+
+    // --- Locations : prix Worco via /api/quote ---
+    const fromCache = new Map<string, { from: number | null; currencySymbol: string }>();
+    let quoteTimer: number | undefined;
+    let quoteSeq = 0; // ignore les réponses arrivées après une réponse plus récente
+    let lastQuoteKey = '';
+
+    function rentalParams() {
+      return new URLSearchParams({
+        category: catInput?.value || '',
+        startDate: sel.start ? iso(sel.start) : '',
+        endDate: sel.end ? iso(sel.end) : '',
+        pickupTime: field<HTMLSelectElement>('pickupTime')?.value || '08:00',
+        vehicles: String(Math.max(1, parseInt(field('vehicles')?.value || '1', 10) || 1)),
+      });
+    }
+
+    async function refreshRentalPrice() {
+      const seq = ++quoteSeq;
+      const params = rentalParams();
+      const category = params.get('category')!;
+
+      // Sans dates : prix d'appel « from X$ / day »
+      if (!sel.start || !sel.end) {
+        clearMsg('quote');
+        lastQuoteKey = '';
+        let cached = fromCache.get(category);
+        if (!cached) {
+          setPill('from', '…', '/ day', true);
+          try {
+            const res: ApiResult = await fetch(`/api/quote?category=${encodeURIComponent(category)}`).then((r) => r.json());
+            if (!res.ok) throw new Error(res.error);
+            cached = { from: res.from as number | null, currencySymbol: String(res.currencySymbol || '$') };
+            fromCache.set(category, cached);
+          } catch {
+            if (seq === quoteSeq) hidePill();
+            return;
+          }
+        }
+        if (seq !== quoteSeq) return;
+        if (cached.from == null) hidePill();
+        else setPill('from', `${cached.from}${cached.currencySymbol}`, '/ day');
+        return;
+      }
+
+      // Avec dates : total réel pour N véhicules (tarifs saisonniers Worco)
+      const key = params.toString();
+      if (key === lastQuoteKey) return;
+      setPill('total', '…', null, true);
+      try {
+        const res: ApiResult = await fetch(`/api/quote?${params}`).then((r) => r.json());
+        if (seq !== quoteSeq) return;
+        if (!res.ok) {
+          hidePill();
+          showMsg(String(res.error || 'Price unavailable right now.'), 'error', 'quote');
+          return;
+        }
+        lastQuoteKey = key;
+        if (!res.enough) {
+          hidePill();
+          const n = Number(res.available);
+          const label = (vehicleLabel() + (n === 1 ? '' : 's'));
+          showMsg(n ? `Only ${n} ${label} available on these dates.` : `No ${label} available on these dates — please try other dates.`, 'error', 'quote');
+          return;
+        }
+        clearMsg('quote');
+        setPill('total', `${res.total}${res.currencySymbol || '$'}`, null);
+      } catch {
+        if (seq === quoteSeq) hidePill();
+      }
+    }
+
+    function vehicleLabel() {
+      return ({ 'atv-rental': 'ATV', 'scooter-rental': 'scooter', 'mountain-bike-rental': 'mountain bike' } as Record<string, string>)[catInput?.value || ''] || 'vehicle';
+    }
+
+    function updatePrice() {
+      if (kind === 'tour') {
+        window.clearTimeout(quoteTimer);
+        quoteSeq++; // annule une requête de location en cours
+        const total = tourTotal();
+        total ? setPill('total', `${total}$`, null) : hidePill();
+        return;
+      }
+      if (rentalsViaWhatsApp()) {
+        hidePill(); // pas de prix sans Worco (on n'affiche jamais de prix inventés)
+        return;
+      }
+      // Locations : attendre 400 ms sans changement (limite Worco : 120 requêtes/min)
+      window.clearTimeout(quoteTimer);
+      quoteTimer = window.setTimeout(refreshRentalPrice, 400);
+    }
+
+    // Recalcul uniquement pour les champs qui influent sur le prix (pas en tapant son nom)
+    const PRICE_FIELDS = ['tour', 'quads', 'ridersPerQuad', 'pickupTime', 'vehicles'];
+    const onPriceField = (e: Event) => {
+      const t = e.target as HTMLInputElement;
+      if (PRICE_FIELDS.includes(t.name)) updatePrice();
+      if (t.getAttribute?.('aria-invalid')) t.removeAttribute('aria-invalid');
+    };
+    form.addEventListener('input', onPriceField);
+    form.addEventListener('change', onPriceField);
+
+    /* ---------- Champs : Entrée valide le champ, n'envoie PAS la demande ---------- */
+    // Garde un nombre valide (min 1, pas de maximum) : "0" ou "" → 1
+    function normalizeNumber(input: HTMLInputElement) {
+      const min = Number(input.min || 1);
+      const max = Number(input.max || Infinity);
+      const n = parseInt(input.value, 10);
+      input.value = String(Number.isNaN(n) ? min : Math.min(max, Math.max(min, n)));
+    }
+    form.addEventListener('change', (e) => {
+      const t = e.target;
+      if (t instanceof HTMLInputElement && t.type === 'number') {
+        normalizeNumber(t);
+        updatePrice();
+      }
+    });
+    // Par défaut, Entrée dans un champ soumet le formulaire : on l'empêche.
+    // La demande ne part qu'au clic sur « Request reservation ». (Le textarea garde Entrée = retour à la ligne.)
+    form.addEventListener('keydown', (e) => {
+      const t = e.target;
+      if (t instanceof HTMLInputElement && t.dataset.dateField && ['Enter', ' ', 'ArrowDown'].includes(e.key)) {
+        e.preventDefault();
+        openPicker(t.dataset.dateField as DateField, true);
+        return;
+      }
+      if (e.key !== 'Enter' || !(t instanceof HTMLInputElement || t instanceof HTMLSelectElement)) return;
+      e.preventDefault();
+      if (t instanceof HTMLInputElement && t.type === 'radio') {
+        t.click(); // Entrée sur une carte de tour = la sélectionner
+        return;
+      }
+      if (t instanceof HTMLInputElement && t.type === 'number') normalizeNumber(t);
+      updatePrice();
+      t.blur(); // « valide » le champ (sort de l'édition)
+    });
+
+    /* ---------- Category tabs ---------- */
+    function setCategory(tab: HTMLButtonElement) {
+      const id = tab.dataset.cat || '';
+      kind = (tab.dataset.kind as Kind) || 'rental';
+
+      tabs.forEach((t) => {
+        const active = t === tab;
+        t.classList.toggle('is-active', active);
+        t.setAttribute('aria-selected', String(active));
+      });
+      panels.forEach((p) => (p.hidden = p.dataset.catPanel !== id));
+      expCard?.classList.toggle('exp-card--center', kind === 'rental');
+      if (overviewText) overviewText.textContent = tab.dataset.overview || '';
+      if (catInput) catInput.value = id;
+      if (vehicleHint) vehicleHint.textContent = tab.dataset.vehicleHint || '';
+      groups.forEach((g) => {
+        const on = g.dataset.kind === kind;
+        g.hidden = !on;
+        g.disabled = !on; // un fieldset désactivé est exclu du FormData
+      });
+
+      if (kind === 'tour') sel.end = null; // un tour = une seule date
+      closePicker();
+      lastQuoteKey = '';
+      syncDateFields();
+      render();
+      clearMsg();
+      if (kind === 'rental' && !rentalsViaWhatsApp()) refreshRentalPrice(); // immédiat au changement d'onglet
+      else updatePrice();
+    }
+    tabs.forEach((tab) => tab.addEventListener('click', () => setCategory(tab)));
+
+    /* ---------- Submit ---------- */
+    let busy = false;
+    let lastSentKey = ''; // évite d'envoyer deux fois exactement la même demande
+
+    function invalid(name: string, text: string) {
+      const el = field(name);
+      el?.setAttribute('aria-invalid', 'true');
+      el?.focus();
+      showMsg(text, 'error');
+    }
+
+    function validateContact(data: Record<string, string>) {
+      if ((data.name || '').trim().length < 2) return invalid('name', 'Please enter your full name.'), false;
+      if (!EMAIL_RE.test((data.email || '').trim())) return invalid('email', 'Please enter a valid email address.'), false;
+      if ((data.phone || '').replace(/\D/g, '').length < 6) return invalid('phone', 'Please enter a valid phone number.'), false;
+      return true;
+    }
+
+    function setBusy(on: boolean) {
+      busy = on;
+      if (!submitBtn) return;
+      submitBtn.disabled = on;
+      submitBtn.textContent = on ? 'Sending…' : 'Request reservation';
+    }
+
+    /** Ouvre WhatsApp vers l'agence avec un message pré-rempli. Renvoie le lien (pour le lien de secours). */
+    function openWhatsApp(lines: (string | null)[]) {
+      const text = lines.filter((l) => l !== null).join('\n'); // champs optionnels vides : pas de ligne
+      const href = `https://wa.me/${CACTUS_WHATSAPP}?text=${encodeURIComponent(text)}`;
+      // Clic sur un lien créé dans le geste de l'utilisateur : pas bloqué comme une pop-up
+      const a = document.createElement('a');
+      a.href = href;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.click();
+      return href;
+    }
+
+    const contactLines = (data: Record<string, string>) => [
+      `Name: ${data.name.trim()}`,
+      `Email: ${data.email.trim()}`,
+      `Phone: ${data.phone.trim()}`,
+      data.whatsapp?.trim() ? `WhatsApp: ${data.whatsapp.trim()}` : null,
+      data.message?.trim() ? `Message: ${data.message.trim()}` : null,
+    ];
+
+    // ATV Tour (hors Worco)
+    function openTourWhatsApp(data: Record<string, string>) {
+      const tourInput = form!.querySelector<HTMLInputElement>('input[name="tour"]:checked');
+      const tourName = tourInput?.closest('.tour-card')?.querySelector('.tour-card__name')?.textContent || data.tour;
+      const departure = field<HTMLSelectElement>('departureTime');
+      const riders = data.ridersPerQuad === '1' ? '1 rider' : '2 riders';
+      return openWhatsApp([
+        `Hello Cactus! I'd like to book an ATV tour 🌵`,
+        ``,
+        `Tour: ${tourName}`,
+        `Date: ${fmt(sel.start!)}`,
+        `Departure: ${departure?.selectedOptions[0]?.textContent || data.departureTime}`,
+        `Quads: ${data.quads} (${riders} per quad)`,
+        `Estimated total: ${tourTotal()}$`,
+        ``,
+        ...contactLines(data),
+      ]);
+    }
+
+    // Location sans Worco : demande envoyée par WhatsApp (prix et disponibilité confirmés par l'agence)
+    function sendRentalViaWhatsApp(data: Record<string, string>) {
+      const key = `rental-wa:${JSON.stringify({ ...data, s: sel.start && iso(sel.start), e: sel.end && iso(sel.end) })}`;
+      if (key === lastSentKey) {
+        showMsg('This request has already been sent — we’ll get back to you shortly.', 'success');
+        return;
+      }
+      const activity = root.querySelector('.cat-tab.is-active')?.textContent?.trim() || 'Rental';
+      const pickup = field<HTMLSelectElement>('pickupTime');
+      const href = openWhatsApp([
+        `Hello Cactus! I'd like to book a rental 🌵`,
+        ``,
+        `Activity: ${activity}`,
+        `Pick-up: ${fmt(sel.start!)} at ${pickup?.selectedOptions[0]?.textContent || data.pickupTime}`,
+        `Return: ${fmt(sel.end!)}`,
+        `Number of vehicles: ${data.vehicles}`,
+        ``,
+        ...contactLines(data),
+      ]);
+      lastSentKey = key;
+      showMsg('WhatsApp is opening with your rental request — just press send and we’ll confirm availability and price shortly.', 'success', 'submit', {
+        href,
+        label: 'Didn’t open? Click here.',
+      });
+    }
+
+    // ATV Tour : WhatsApp ET email à Cactus, en même temps
+    async function sendTourRequest(data: Record<string, string>) {
+      const payload = { ...data, date: iso(sel.start!) };
+      const key = `tour:${JSON.stringify(payload)}`;
+      if (key === lastSentKey) {
+        showMsg('This request has already been sent — we’ll get back to you shortly.', 'success');
+        return;
+      }
+
+      // 1. WhatsApp tout de suite (doit rester dans le clic de l'utilisateur)
+      const waHref = openTourWhatsApp(data);
+      const waLink = { href: waHref, label: 'Didn’t open? Click here.' };
+      setBusy(true);
+      showMsg('WhatsApp is opening — we’re also sending your request by email…', 'success', 'submit', waLink);
+
+      // 2. Email à Cactus (serveur)
+      try {
+        const res: ApiResult = await fetch('/api/tour-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }).then((r) => r.json());
+        if (res.ok) {
+          lastSentKey = key;
+          const ref = res.ref ? ` (ref ${res.ref})` : '';
+          if (res.mailSimulated && !import.meta.env.DEV) {
+            // Email pas encore configuré en ligne : on n'annonce que WhatsApp
+            showMsg('WhatsApp is opening with your tour request — just press send and we’ll confirm shortly.', 'success', 'submit', waLink);
+          } else {
+            const test = res.mailSimulated ? ' (test mode — the email was not really sent)' : '';
+            showMsg(`Your tour request has been emailed to Cactus${ref}. Press send in WhatsApp too, and we’ll confirm shortly.${test}`, 'success', 'submit', waLink);
+          }
+        } else {
+          showMsg(`${res.error || 'We couldn’t email your request.'} Please send it on WhatsApp.`, 'error', 'submit', waLink);
+        }
+      } catch {
+        showMsg('We couldn’t email your request — please send it on WhatsApp.', 'error', 'submit', waLink);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (busy) return;
+
+      const missingDate = kind === 'tour' ? !sel.start : !sel.start || !sel.end;
+      if (missingDate) {
+        showMsg(kind === 'tour' ? 'Please pick your tour date.' : 'Please pick your start and end dates.', 'error');
+        const field: DateField = kind === 'tour' ? 'single' : !sel.start ? 'start' : 'end';
+        dateInputs[field]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        openPicker(field);
+        return;
+      }
+
+      const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+      if (!validateContact(data)) return;
+
+      if (kind === 'tour') {
+        await sendTourRequest(data);
+        return;
+      }
+
+      if (rentalsViaWhatsApp()) {
+        sendRentalViaWhatsApp(data);
+        return;
+      }
+
+      // Location → Worco (via notre route serveur)
+      const payload = {
+        ...data,
+        startDate: iso(sel.start!),
+        endDate: iso(sel.end!),
+        vehicles: Math.max(1, parseInt(data.vehicles || '1', 10) || 1),
+      };
+      const key = JSON.stringify(payload);
+      if (key === lastSentKey) {
+        showMsg('This request has already been sent — we’ll get back to you shortly.', 'success');
+        return;
+      }
+
+      setBusy(true);
+      try {
+        const res: ApiResult = await fetch('/api/booking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }).then((r) => r.json());
+
+        if (res.ok) {
+          lastSentKey = key;
+          const orders = (res.orders as string[]) || [];
+          const refs = orders.length ? ` Your reference${orders.length > 1 ? 's' : ''}: ${orders.join(', ')}.` : '';
+          const test = res.mock ? ' (test mode — no real booking was created)' : '';
+          showMsg(`Request sent!${refs} We’ll confirm your reservation shortly. Payment in cash at pick-up.${test}`, 'success');
+        } else {
+          showMsg(String(res.error || 'Something went wrong. Please try again.'), 'error');
+          if (res.code === 'not_enough' || res.code === 'partial') {
+            lastQuoteKey = '';
+            updatePrice(); // rafraîchit prix et disponibilité
+          }
+        }
+      } catch {
+        showMsg('Network error — please check your connection and try again, or contact us on WhatsApp.', 'error');
+      } finally {
+        setBusy(false);
+      }
+    });
+
+    // État initial
+    setCategory(root.querySelector<HTMLButtonElement>('.cat-tab.is-active') || tabs[0]);
+  });
+</script>
