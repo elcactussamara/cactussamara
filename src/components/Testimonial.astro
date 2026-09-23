@@ -2,6 +2,10 @@
 // Avis clients — carrousel.
 // 👉 Pour ajouter un avis : copier un objet dans le tableau ci-dessous.
 //    (Les vrais avis Google de l'agence viennent ici. Un seul est fourni par la maquette.)
+import { fill, useT } from '../i18n';
+
+const t = useT(Astro.currentLocale);
+// Les avis restent dans leur langue d'origine (vrais avis Google).
 const testimonials = [
   {
     quote:
@@ -29,7 +33,7 @@ const testimonials = [
 
 <section class="testimonial">
   {testimonials.length > 1 && (
-    <button class="testimonial__arrow testimonial__arrow--prev" aria-label="Previous review">
+    <button class="testimonial__arrow testimonial__arrow--prev" aria-label={t.testimonial.prev}>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         <path d="M10 2L4 8l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
@@ -38,9 +42,9 @@ const testimonials = [
 
   <div class="testimonial__inner">
     <div class="testimonial__slides">
-      {testimonials.map((t, i) => (
+      {testimonials.map((r, i) => (
         <figure class:list={['tslide', { 'is-active': i === 0 }]} data-slide={i}>
-          <div class="tslide__stars" aria-label="5 out of 5 stars">
+          <div class="tslide__stars" aria-label={t.testimonial.stars}>
             {Array.from({ length: 5 }).map(() => (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 2l2.9 6.26L21.5 9l-5 4.87L17.8 21 12 17.27 6.2 21l1.3-7.13-5-4.87 6.6-.74L12 2z" />
@@ -48,16 +52,16 @@ const testimonials = [
             ))}
           </div>
 
-          <blockquote class="tslide__quote">“{t.quote}”</blockquote>
+          <blockquote class="tslide__quote" lang="en">“{r.quote}”</blockquote>
 
           <figcaption class="tslide__author">
             <div class="tslide__person">
-              <span class="tslide__name">{t.name}</span>
-              <span class="tslide__loc">{t.location}</span>
+              <span class="tslide__name">{r.name}</span>
+              <span class="tslide__loc">{r.location}</span>
             </div>
             <span class="tslide__divider" aria-hidden="true"></span>
-            <a href={t.reviewUrl} target="_blank" rel="noopener" class="tslide__link">
-              Read the Review On Google
+            <a href={r.reviewUrl} target="_blank" rel="noopener" class="tslide__link">
+              {t.testimonial.readReview}
               <svg width="7" height="12" viewBox="0 0 8 14" fill="none" aria-hidden="true">
                 <path d="M1 1l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
@@ -73,7 +77,7 @@ const testimonials = [
           <button
             class:list={['tdot', { 'is-active': i === 0 }]}
             data-dot={i}
-            aria-label={`Go to review ${i + 1}`}
+            aria-label={fill(t.testimonial.goTo, { n: i + 1 })}
           ></button>
         ))}
       </div>
@@ -81,7 +85,7 @@ const testimonials = [
   </div>
 
   {testimonials.length > 1 && (
-    <button class="testimonial__arrow testimonial__arrow--next" aria-label="Next review">
+    <button class="testimonial__arrow testimonial__arrow--next" aria-label={t.testimonial.next}>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         <path d="M6 2l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
       </svg>

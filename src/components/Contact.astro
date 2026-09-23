@@ -1,6 +1,9 @@
 ---
-// Coordonnées de l'agence — à ajuster si besoin.
-const address = '100 meters west of the National Bank, C. Diego, Guanacaste Province, Sámara, 50205';
+// Coordonnées de l'agence — à ajuster si besoin (adresse traduite : src/i18n/ui.ts).
+import { useT } from '../i18n';
+
+const t = useT(Astro.currentLocale);
+const address = t.contact.address;
 const phoneDisplay = '8389 6565';
 const phoneLink = '+50683896565';
 const mapsQuery = encodeURIComponent('El Cactus Scooter Rental Service, Sámara, Guanacaste, Costa Rica');
@@ -11,11 +14,8 @@ const mapsEmbed = `https://www.google.com/maps?q=${mapsQuery}&z=15&output=embed`
 <section class="contact" id="contact">
   <div class="contact__inner">
     <div class="contact__head">
-      <h2 class="contact__title">Find Us in Sámara</h2>
-      <p class="contact__subtitle">
-        We're conveniently located in the heart of Sámara. Stop by our shop, meet
-        the team, and start your adventure.
-      </p>
+      <h2 class="contact__title">{t.contact.title}</h2>
+      <p class="contact__subtitle">{t.contact.subtitle}</p>
     </div>
 
     <div class="contact__content">
@@ -28,7 +28,7 @@ const mapsEmbed = `https://www.google.com/maps?q=${mapsQuery}&z=15&output=embed`
               <path d="M12 2c-3.9 0-7 3.1-7 7 0 5 7 13 7 13s7-8 7-13c0-3.9-3.1-7-7-7z" fill="currentColor"/>
               <circle cx="12" cy="9" r="2.5" fill="var(--color-green-dark)"/>
             </svg>
-            Address
+            {t.contact.addressLabel}
           </span>
           <p class="info-item__value">{address}</p>
         </div>
@@ -38,7 +38,7 @@ const mapsEmbed = `https://www.google.com/maps?q=${mapsQuery}&z=15&output=embed`
             <svg class="info-item__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .8-.3 1l-2.2 2.2z" fill="currentColor"/>
             </svg>
-            Phone
+            {t.contact.phoneLabel}
           </span>
           <p class="info-item__value">
             <a href={`tel:${phoneLink}`}>{phoneDisplay}</a>
@@ -46,7 +46,7 @@ const mapsEmbed = `https://www.google.com/maps?q=${mapsQuery}&z=15&output=embed`
         </div>
 
         <a href={mapsLink} target="_blank" rel="noopener" class="contact__maplink">
-          Open in Google Maps
+          {t.contact.openMaps}
           <svg width="7" height="12" viewBox="0 0 8 14" fill="none" aria-hidden="true">
             <path d="M1 1l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -56,7 +56,7 @@ const mapsEmbed = `https://www.google.com/maps?q=${mapsQuery}&z=15&output=embed`
       <div class="contact__map">
         <iframe
           src={mapsEmbed}
-          title="Cactus location in Sámara, Costa Rica"
+          title={t.contact.mapTitle}
           loading="lazy"
           referrerpolicy="no-referrer-when-downgrade"
           allowfullscreen

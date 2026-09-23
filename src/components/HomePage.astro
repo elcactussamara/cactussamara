@@ -1,0 +1,26 @@
+---
+// Page d'accueil complète — commune aux trois langues (/, /es/, /fr/).
+// Chaque section lit la langue de la page (Astro.currentLocale) et prend ses textes dans src/i18n/ui.ts.
+import Base from '../layouts/Base.astro';
+import Navbar from './Navbar.astro';
+import Header from './Header.astro';
+import Explore from './Layout.astro';
+import Testimonial from './Testimonial.astro';
+import Booking from './Booking.astro';
+import Gallery from './Gallery.astro';
+import Contact from './Contact.astro';
+import CTA from './CTA.astro';
+import Footer from './Footer.astro';
+---
+
+<Base>
+  <Navbar />
+  <Header />
+  <Explore />
+  <Testimonial />
+  <Booking />
+  <Gallery />
+  <Contact />
+  <CTA />
+  <Footer />
+</Base>

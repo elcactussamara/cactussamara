@@ -1,17 +1,17 @@
 ---
 import Button from './Button.astro';
+import { useT } from '../i18n';
+
+const t = useT(Astro.currentLocale);
 ---
 
 <section class="cta">
   <div class="cta__inner">
-    <h2 class="cta__title">Ready for Your Next Adventure?</h2>
-    <p class="cta__subtitle">
-      Book your ATV, motorcycle, mountain bike, or guided tour in just a few
-      clicks. We'll take care of the rest.
-    </p>
+    <h2 class="cta__title">{t.cta.title}</h2>
+    <p class="cta__subtitle">{t.cta.subtitle}</p>
     <div class="cta__actions">
-      <Button href="#booking" variant="filled">Book Your Adventure</Button>
-      <Button href="https://www.instagram.com/elcactus_rental_samara/" variant="outline-dark">See more on Instagram</Button>
+      <Button href="#booking" variant="filled">{t.cta.book}</Button>
+      <Button href="https://www.instagram.com/elcactus_rental_samara/" variant="outline-dark">{t.cta.instagram}</Button>
     </div>
   </div>
 </section>
@@ -35,6 +35,8 @@ import Button from './Button.astro';
     font-size: var(--fs-56);
     color: var(--color-black);
     line-height: 1.1;
+    /* Titres traduits plus longs (FR/ES) : lignes équilibrées, pour ne pas filer sous le sticker vélo */
+    text-wrap: balance;
   }
   .cta__subtitle {
     font-family: var(--font-body);

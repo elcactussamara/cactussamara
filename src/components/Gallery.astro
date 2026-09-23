@@ -5,20 +5,21 @@
 //           dernière photo, puis le scroll vertical reprend.
 // Mobile  : swipe tactile natif.
 // 👉 Ajouter/retirer des photos : éditer le tableau ci-dessous.
+import { useT } from '../i18n';
+
+const t = useT(Astro.currentLocale);
 const photos = [
-  { src: '/images/gallery/atv-tour-river.jpg', alt: 'ATV tour crossing a river near Sámara' },
-  { src: '/images/gallery/atv-tour-cow.jpg', alt: 'ATV tour on a countryside trail' },
-  { src: '/images/gallery/atv-tour-group-1.jpg', alt: 'Group ATV tour in Sámara' },
-  { src: '/images/gallery/atv-tour-group-2.jpg', alt: 'Group ATV adventure in Sámara' },
-];
+  '/images/gallery/atv-tour-river.jpg',
+  '/images/gallery/atv-tour-cow.jpg',
+  '/images/gallery/atv-tour-group-1.jpg',
+  '/images/gallery/atv-tour-group-2.jpg',
+].map((src, i) => ({ src, alt: t.gallery.alts[i] ?? '' })); // textes alternatifs : src/i18n/ui.ts
 ---
 
 <section class="gallery" data-gallery>
   <div class="gallery__head">
-    <h2 class="gallery__title">See the Adventure for Yourself</h2>
-    <p class="gallery__subtitle">
-      From hidden beaches to scenic trails, discover the unforgettable moments waiting for you.
-    </p>
+    <h2 class="gallery__title">{t.gallery.title}</h2>
+    <p class="gallery__subtitle">{t.gallery.subtitle}</p>
   </div>
 
   <div class="gallery__pin" data-pin>

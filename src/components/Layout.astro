@@ -1,90 +1,58 @@
 ---
 import Button from './Button.astro';
+import { useT } from '../i18n';
 
+const t = useT(Astro.currentLocale);
+// Textes des onglets : src/i18n/ui.ts (explore.tabs)
 const tabs = [
-  {
-    id: 'atv-tour',
-    label: 'ATV Tour',
-    short: 'ATV Tour',
-    heading: 'Experience the Adventure with Our Guided ATV Tours',
-    body: "Discover Sámara's most breathtaking landscapes with a knowledgeable local guide. Ride through beaches, mountain trails, scenic backroads, and stunning viewpoints while enjoying a safe and unforgettable adventure.",
-    cta: 'Book a tour',
-    image: '/images/explore/atv-tour.jpg',
-  },
-  {
-    id: 'atv-rental',
-    label: 'ATV Rental',
-    short: 'ATV Rental',
-    heading: 'Explore Sámara at Your Own Pace',
-    body: 'Rent a reliable, well-maintained ATV and explore Sámara on your own schedule. Perfect for discovering the area’s beaches, local villages, and scenic backroads.',
-    cta: 'Book a rental',
-    image: '/images/explore/atv-rental.jpg',
-  },
-  {
-    id: 'scooter-rental',
-    label: 'Scooter Rental',
-    short: 'Scooter',
-    heading: 'Hit the Road Your Way',
-    body: 'Enjoy the freedom of riding a comfortable, well-maintained scooter as you explore Sámara, nearby villages, and the beautiful coastal roads surrounding the area.',
-    cta: 'Book a rental',
-    image: '/images/explore/scooter-rental.jpg',
-  },
-  {
-    id: 'mountain-bike-rental',
-    label: 'Mountain Bike Rental',
-    short: 'Mountain Bike',
-    heading: 'Go Beyond the Beaten Path',
-    body: "Explore Sámara's scenic trails, tropical forests, and breathtaking viewpoints on one of our mountain bikes. For a comfortable ride or a more challenging adventure, we have the perfect bike for you.",
-    cta: 'Book a rental',
-    image: null,
-  },
-];
+  { id: 'atv-tour', cta: t.explore.bookTour, image: '/images/explore/atv-tour.jpg' },
+  { id: 'atv-rental', cta: t.explore.bookRental, image: '/images/explore/atv-rental.jpg' },
+  { id: 'scooter-rental', cta: t.explore.bookRental, image: '/images/explore/scooter-rental.jpg' },
+  { id: 'mountain-bike-rental', cta: t.explore.bookRental, image: null },
+].map((tab) => ({ ...tab, ...t.explore.tabs[tab.id as keyof typeof t.explore.tabs] }));
 ---
 
 <section class="layout" id="services">
   <div class="layout__inner">
     <div class="layout__head">
-      <h2 class="layout__title">Choose Your Way to Explore Sámara</h2>
-      <p class="layout__subtitle">
-        Whether you're looking for the freedom to explore on your own or the
-        excitement of a guided adventure, we have the perfect experience for you.
-      </p>
+      <h2 class="layout__title">{t.explore.title}</h2>
+      <p class="layout__subtitle">{t.explore.subtitle}</p>
     </div>
 
     <div class="tabs">
       <div class="tabs__menu" role="tablist">
-        {tabs.map((t, i) => (
+        {tabs.map((tab, i) => (
           <button
             class:list={['tabs__link', { 'is-active': i === 0 }]}
             role="tab"
             aria-selected={i === 0 ? 'true' : 'false'}
-            data-tab={t.id}
+            data-tab={tab.id}
           >
-            <span class="tab-full">{t.label}</span>
-            <span class="tab-short">{t.short}</span>
+            <span class="tab-full">{tab.label}</span>
+            <span class="tab-short">{tab.short}</span>
           </button>
         ))}
       </div>
 
       <div class="tabs__content">
-        {tabs.map((t, i) => (
+        {tabs.map((tab, i) => (
           <div
             class:list={['pane', { 'is-active': i === 0 }]}
             role="tabpanel"
-            data-pane={t.id}
+            data-pane={tab.id}
           >
             <div class="pane__text">
-              <h3 class="pane__heading">{t.heading}</h3>
-              <p class="pane__body">{t.body}</p>
+              <h3 class="pane__heading">{tab.heading}</h3>
+              <p class="pane__body">{tab.body}</p>
               <div class="pane__actions">
-                <Button href="#booking" variant="filled">{t.cta}</Button>
+                <Button href="#booking" variant="filled">{tab.cta}</Button>
                 <a
                   href="https://www.instagram.com/elcactus_rental_samara/"
                   target="_blank"
                   rel="noopener"
                   class="pane__insta"
                 >
-                  See More on Instagram
+                  {t.explore.instagram}
                   <svg width="8" height="14" viewBox="0 0 8 14" fill="none" aria-hidden="true">
                     <path d="M1 1L7 7L1 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
@@ -93,8 +61,8 @@ const tabs = [
             </div>
 
             <div class="pane__media">
-              {t.image ? (
-                <img src={t.image} alt={t.label} width="552" height="552" loading="lazy" decoding="async" />
+              {tab.image ? (
+                <img src={tab.image} alt={tab.label} width="552" height="552" loading="lazy" decoding="async" />
               ) : (
                 <div class="pane__placeholder" aria-hidden="true">
                   <svg width="72" height="72" viewBox="0 0 24 24" fill="none">

@@ -8,8 +8,14 @@ import { worcoMode } from '../lib/worco';
 // (la clé API reste côté serveur, voir src/lib/worco.ts). Prix « from » et totaux viennent de Worco.
 // ATV Tours → hors Worco : la demande part vers Cactus par email (/api/tour-request) ET WhatsApp (message pré-rempli).
 
+import { INTL_LOCALE, getLocale, pageHref, timeLabel, useT } from '../i18n';
+
+const locale = getLocale(Astro.currentLocale);
+const t = useT(locale);
+const tb = t.booking;
+
 type Category = {
-  id: string;
+  id: keyof typeof tb.categories;
   label: string;
   kind: 'tour' | 'rental';
   overview: string;
@@ -19,61 +25,47 @@ type Category = {
   vehicleHint?: string;
 };
 
-const categories: Category[] = [
-  {
-    id: 'atv-tour',
-    label: 'ATV Tour',
-    kind: 'tour',
-    overview:
-      'A guided tour through the scenic trails of Sámara, including beach stops and breathtaking viewpoints.',
-    image: {
-      desktop: '/images/booking/atv-tour-desktop.jpg',
-      mobile: '/images/booking/atv-tour-mobile.jpg',
-      alt: 'Rider on an ATV on a jungle trail near Sámara',
-    },
-  },
-  {
-    id: 'atv-rental',
-    label: 'ATV Rental',
-    kind: 'rental',
-    vehicleHint: '2 max per vehicle',
-    overview:
-      "Rent a well-maintained ATV and explore Sámara's beaches, villages and scenic backroads at your own pace.",
-    image: {
-      desktop: '/images/booking/atv-rental-desktop.jpg',
-      mobile: '/images/booking/atv-rental-mobile.jpg',
-      alt: 'Cactus ATV parked on a hilltop overlooking the Pacific coast',
-    },
-  },
-  {
-    id: 'scooter-rental',
-    label: 'Scooter Rental',
-    kind: 'rental',
-    vehicleHint: '2 max per vehicle',
-    overview:
-      'A comfortable, reliable scooter to cruise Sámara, nearby villages and the beautiful coastal roads.',
-    image: {
-      desktop: '/images/booking/scooter-rental-desktop.jpg',
-      mobile: '/images/booking/scooter-rental-mobile.jpg',
-      alt: 'Cactus scooter parked under palm trees',
-    },
-  },
-  {
-    id: 'mountain-bike-rental',
-    label: 'Mountain Bike Rental',
-    kind: 'rental',
-    vehicleHint: '',
-    overview:
-      "Hit Sámara's scenic trails and tropical forests on a mountain bike suited to your ride.",
-    image: null, // TODO photo VTT (pas encore reçue) — sticker en attendant
-  },
-];
+// Textes (libellé, résumé, texte alternatif) : src/i18n/ui.ts → booking.categories
+const photo = (id: string, alt: string) => ({
+  desktop: `/images/booking/${id}-desktop.jpg`,
+  mobile: `/images/booking/${id}-mobile.jpg`,
+  alt,
+});
+const categories: Category[] = (
+  [
+    { id: 'atv-tour', kind: 'tour', photo: true },
+    { id: 'atv-rental', kind: 'rental', photo: true, hint: true },
+    { id: 'scooter-rental', kind: 'rental', photo: true, hint: true },
+    { id: 'mountain-bike-rental', kind: 'rental', photo: false }, // TODO photo VTT (pas encore reçue) — sticker en attendant
+  ] as const
+).map((c) => ({
+  id: c.id,
+  kind: c.kind,
+  label: tb.categories[c.id].label,
+  overview: tb.categories[c.id].overview,
+  image: c.photo ? photo(c.id, tb.categories[c.id].alt) : null,
+  vehicleHint: 'hint' in c ? tb.vehicleHint : '',
+}));
 
-// Tours + départs : partagés avec le serveur (src/data/tours.ts)
-const tours = TOURS;
-const departureTimes = TOUR_DEPARTURE_HOURS.map(toTimeOption);
+// Tours + départs : partagés avec le serveur (src/data/tours.ts) — noms traduits
+const tours = TOURS.map((tour) => ({ ...tour, name: tb.tourNames[tour.id as keyof typeof tb.tourNames] ?? tour.name }));
+const timeOption = (h: number) => ({ value: toTimeOption(h).value, label: timeLabel(locale, h) });
+const departureTimes = TOUR_DEPARTURE_HOURS.map(timeOption);
 // Retrait des locations : 08:00 → 16:00 (fermeture 16:30)
-const pickupTimes = [8, 9, 10, 11, 12, 13, 14, 15, 16].map(toTimeOption);
+const pickupTimes = [8, 9, 10, 11, 12, 13, 14, 15, 16].map(timeOption);
+
+// Textes utilisés par le script du formulaire (navigateur)
+const i18n = JSON.stringify({
+  ...tb.js,
+  lang: locale,
+  intl: INTL_LOCALE[locale],
+  from: tb.from,
+  perDay: tb.perDay,
+  total: tb.total,
+  submit: tb.submit,
+  rider1: tb.rider1,
+  riders2: tb.riders2,
+});
 
 const first = categories[0];
 // Sans clé Worco sur le site en ligne : pas de prix de location, demandes envoyées par WhatsApp.
@@ -81,19 +73,16 @@ const first = categories[0];
 const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
 ---
 
-<section class="booking" id="booking" data-rentals={rentalsVia}>
+<section class="booking" id="booking" data-rentals={rentalsVia} data-i18n={i18n}>
   <div class="booking__inner">
     <div class="booking__head">
-      <h2 class="booking__title">Reserve Your Spot</h2>
-      <p class="booking__subtitle">
-        Planning ahead is easy. Pick your activity and preferred dates, and we'll confirm your
-        reservation as soon as possible.
-      </p>
+      <h2 class="booking__title">{tb.title}</h2>
+      <p class="booking__subtitle">{tb.subtitle}</p>
     </div>
 
     <div class="booking__area">
       <!-- Category tabs -->
-      <div class="cat-tabs" role="tablist" aria-label="Activity">
+      <div class="cat-tabs" role="tablist" aria-label={tb.activity}>
         {categories.map((c, i) => (
           <button
             type="button"
@@ -134,7 +123,7 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
           )}
         </div>
         <div class="exp-card__caption">
-          <h3 class="exp-card__title">Experience Overview</h3>
+          <h3 class="exp-card__title">{tb.expTitle}</h3>
           <p class="exp-card__text" data-overview-text>{first.overview}</p>
         </div>
       </aside>
@@ -142,11 +131,11 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
       <!-- Reservation form -->
       <form class="bform" data-booking-form novalidate>
         <div class="bform__head">
-          <h3 class="bform__title">Reservation Details</h3>
+          <h3 class="bform__title">{tb.formTitle}</h3>
           <p class="price-pill textured tex-4" data-price-pill aria-live="polite" hidden>
-            <span class="price-pill__small" data-price-prefix>from</span>
+            <span class="price-pill__small" data-price-prefix>{tb.from}</span>
             <span class="price-pill__amount" data-price-amount></span>
-            <span class="price-pill__small" data-price-suffix>/ day</span>
+            <span class="price-pill__small" data-price-suffix>{tb.perDay}</span>
           </p>
         </div>
         <input type="hidden" name="category" data-cat-input value={first.id} />
@@ -154,7 +143,7 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
         <!-- ATV Tour -->
         <fieldset class="bform__group" data-kind="tour" hidden={first.kind !== 'tour'} disabled={first.kind !== 'tour'}>
           <div class="tour-select">
-            <span class="field__label">Select Tour</span>
+            <span class="field__label">{tb.selectTour}</span>
             <div class="tour-options">
               {tours.map((t, i) => (
                 <label class="tour-card">
@@ -172,8 +161,8 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
                   </span>
                   <span class="tour-card__stops">{t.stops}</span>
                   <span class="tour-card__prices">
-                    <span class="tour-card__row"><span>1 rider / quad</span><span class="tour-card__price">${t.prices[1]}</span></span>
-                    <span class="tour-card__row"><span>2 riders / quad</span><span class="tour-card__price">${t.prices[2]}</span></span>
+                    <span class="tour-card__row"><span>{tb.perQuad1}</span><span class="tour-card__price">${t.prices[1]}</span></span>
+                    <span class="tour-card__row"><span>{tb.perQuad2}</span><span class="tour-card__price">${t.prices[2]}</span></span>
                   </span>
                 </label>
               ))}
@@ -182,11 +171,11 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
 
           <div class="bform__row">
             <label class="field">
-              <span class="field__label">Date</span>
-              <input type="text" name="date" data-date-single data-date-field="single" readonly placeholder="Pick a date" aria-haspopup="dialog" aria-expanded="false" />
+              <span class="field__label">{tb.date}</span>
+              <input type="text" name="date" data-date-single data-date-field="single" readonly placeholder={tb.pickDate} aria-haspopup="dialog" aria-expanded="false" />
             </label>
             <label class="field">
-              <span class="field__label"><span class="lbl-desktop">Preferred Departure Time</span><span class="lbl-mobile">Departure Time</span></span>
+              <span class="field__label"><span class="lbl-desktop">{tb.departure}</span><span class="lbl-mobile">{tb.departureShort}</span></span>
               <select name="departureTime">
                 {departureTimes.map((t) => <option value={t.value}>{t.label}</option>)}
               </select>
@@ -195,14 +184,14 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
 
           <div class="bform__row">
             <label class="field">
-              <span class="field__label">Number of Quads</span>
+              <span class="field__label">{tb.quads}</span>
               <input type="number" name="quads" value="2" min="1" inputmode="numeric" data-price-input />
             </label>
             <label class="field">
-              <span class="field__label">Riders per Quad</span>
+              <span class="field__label">{tb.ridersPerQuad}</span>
               <select name="ridersPerQuad" data-price-input>
-                <option value="1">1 rider</option>
-                <option value="2" selected>2 riders</option>
+                <option value="1">{tb.rider1}</option>
+                <option value="2" selected>{tb.riders2}</option>
               </select>
             </label>
           </div>
@@ -212,47 +201,47 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
         <fieldset class="bform__group" data-kind="rental" hidden={first.kind !== 'rental'} disabled={first.kind !== 'rental'}>
           <div class="bform__row">
             <label class="field">
-              <span class="field__label">Start Date</span>
-              <input type="text" name="startDate" data-date-start data-date-field="start" readonly placeholder="Pick a date" aria-haspopup="dialog" aria-expanded="false" />
+              <span class="field__label">{tb.startDate}</span>
+              <input type="text" name="startDate" data-date-start data-date-field="start" readonly placeholder={tb.pickDate} aria-haspopup="dialog" aria-expanded="false" />
             </label>
             <label class="field">
-              <span class="field__label">End Date</span>
-              <input type="text" name="endDate" data-date-end data-date-field="end" readonly placeholder="Pick a date" aria-haspopup="dialog" aria-expanded="false" />
+              <span class="field__label">{tb.endDate}</span>
+              <input type="text" name="endDate" data-date-end data-date-field="end" readonly placeholder={tb.pickDate} aria-haspopup="dialog" aria-expanded="false" />
             </label>
           </div>
 
           <div class="bform__stack">
             <label class="field">
-              <span class="field__label">Pick-up Time</span>
+              <span class="field__label">{tb.pickupTime}</span>
               <select name="pickupTime">
                 {pickupTimes.map((t) => <option value={t.value}>{t.label}</option>)}
               </select>
             </label>
             <label class="field">
-              <span class="field__label">Number of Vehicles<span class="field__hint" data-hint-slot></span></span>
+              <span class="field__label">{tb.vehicles}<span class="field__hint" data-hint-slot></span></span>
               <input type="number" name="vehicles" value="2" min="1" inputmode="numeric" />
             </label>
           </div>
         </fieldset>
 
         <!-- Calendrier en pop-up : s'ouvre sous le champ date cliqué -->
-        <div class="calendar calendar--popover" data-calendar role="dialog" aria-label="Choose your dates" hidden>
+        <div class="calendar calendar--popover" data-calendar role="dialog" aria-label={tb.calendar} hidden>
           <div class="calendar__header">
             <div class="calendar__titles">
               <h3 class="calendar__month" data-cal-month>&nbsp;</h3>
               <p class="calendar__hint" data-cal-hint></p>
             </div>
             <div class="calendar__nav">
-              <button type="button" class="calendar__navbtn" data-cal-prev aria-label="Previous month">
+              <button type="button" class="calendar__navbtn" data-cal-prev aria-label={tb.prevMonth}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
               </button>
-              <button type="button" class="calendar__navbtn" data-cal-next aria-label="Next month">
+              <button type="button" class="calendar__navbtn" data-cal-next aria-label={tb.nextMonth}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
               </button>
             </div>
           </div>
           <div class="calendar__weekdays" aria-hidden="true">
-            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            {tb.weekdays.map((d) => <span>{d}</span>)}
           </div>
           <div class="calendar__grid" data-cal-grid></div>
         </div>
@@ -261,26 +250,26 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
         <div class="bform__group bform__contact">
           <div class="bform__row">
             <label class="field">
-              <span class="field__label">Full Name</span>
+              <span class="field__label">{tb.fullName}</span>
               <input type="text" name="name" autocomplete="name" required maxlength="120" />
             </label>
             <label class="field">
-              <span class="field__label">Email</span>
+              <span class="field__label">{tb.email}</span>
               <input type="email" name="email" autocomplete="email" inputmode="email" required maxlength="160" />
             </label>
           </div>
           <div class="bform__row">
             <label class="field">
-              <span class="field__label">Phone</span>
+              <span class="field__label">{tb.phone}</span>
               <input type="tel" name="phone" autocomplete="tel" inputmode="tel" required maxlength="40" />
             </label>
             <label class="field">
-              <span class="field__label">WhatsApp <span class="field__optional">(optional)</span></span>
+              <span class="field__label">{tb.whatsapp} <span class="field__optional">{tb.optional}</span></span>
               <input type="tel" name="whatsapp" inputmode="tel" maxlength="40" />
             </label>
           </div>
           <label class="field">
-            <span class="field__label">Message <span class="field__optional">(optional)</span></span>
+            <span class="field__label">{tb.message} <span class="field__optional">{tb.optional}</span></span>
             <textarea name="message" rows="3" maxlength="1000"></textarea>
           </label>
           <!-- Anti-spam : invisible pour les humains, rempli par les robots (rejeté côté serveur) -->
@@ -292,11 +281,11 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
         <div class="bform__action">
           <!-- Consentement éclairé (loi CR n° 8968) — nouvel onglet pour ne pas perdre la saisie -->
           <p class="bform__consent">
-            By sending this request, you agree to our
-            <a href="/terms" target="_blank" rel="noopener">Terms of Use</a> and
-            <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.
+            {tb.consentStart}
+            <a href={pageHref(locale, 'terms')} target="_blank" rel="noopener">{tb.consentTerms}</a> {tb.consentAnd}
+            <a href={pageHref(locale, 'privacy')} target="_blank" rel="noopener">{tb.consentPrivacy}</a>.
           </p>
-          <button type="submit" class="bform__submit textured tex-5">Request reservation</button>
+          <button type="submit" class="bform__submit textured tex-5">{tb.submit}</button>
         </div>
         <p class="bform__msg" data-msg hidden></p>
       </form>
@@ -1094,13 +1083,16 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
   type Kind = 'tour' | 'rental';
   type ApiResult = { ok: boolean; mock?: boolean; error?: string; code?: string; [k: string]: unknown };
 
-  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   /** WhatsApp de l'agence : les demandes d'ATV Tour (hors Worco) y sont envoyées. */
   const CACTUS_WHATSAPP = '50683896565';
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
   document.querySelectorAll<HTMLElement>('.booking').forEach((root) => {
     const $ = <T extends Element>(sel: string) => root.querySelector<T>(sel);
+    // Textes dans la langue de la page (src/i18n/ui.ts → booking.js)
+    const T = JSON.parse(root.dataset.i18n || '{}');
+    const fill = (text: string, vars: Record<string, string | number>) =>
+      text.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
 
     const tabs = root.querySelectorAll<HTMLButtonElement>('.cat-tab');
     const panels = root.querySelectorAll<HTMLElement>('[data-cat-panel]');
@@ -1161,14 +1153,17 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
     let view = new Date(firstMonth);
     const sel: { start: Date | null; end: Date | null } = { start: null, end: null };
 
-    const fmt = (d: Date) => `${MONTHS[d.getMonth()].slice(0, 3)} ${String(d.getDate()).padStart(2, '0')}, ${d.getFullYear()}`;
+    const dateFmt = new Intl.DateTimeFormat(T.intl, { day: '2-digit', month: 'short', year: 'numeric' });
+    const monthFmt = new Intl.DateTimeFormat(T.intl, { month: 'long', year: 'numeric' });
+    const fmt = (d: Date) => dateFmt.format(d);
     const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const same = (a: Date | null, b: Date) => !!a && a.getTime() === b.getTime();
 
     function render() {
       const year = view.getFullYear();
       const month = view.getMonth();
-      monthLabel!.textContent = `${MONTHS[month]} ${year}`;
+      const label = monthFmt.format(view);
+      monthLabel!.textContent = label.charAt(0).toUpperCase() + label.slice(1);
       if (prevBtn) prevBtn.disabled = view <= firstMonth;
 
       const offset = (new Date(year, month, 1).getDay() + 6) % 7; // lundi = 0
@@ -1204,11 +1199,7 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
     const popover = $<HTMLElement>('[data-calendar]');
     const hint = $<HTMLElement>('[data-cal-hint]');
     const dateInputs: Record<DateField, HTMLInputElement | null> = { single: dateSingle, start: dateStart, end: dateEnd };
-    const HINTS: Record<DateField, string> = {
-      single: 'Select your tour date',
-      start: 'Select your pick-up date',
-      end: 'Select your return date',
-    };
+    const HINTS: Record<DateField, string> = { single: T.hintSingle, start: T.hintStart, end: T.hintEnd };
     let active: DateField | null = null;
     const monthOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
 
@@ -1377,7 +1368,7 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
         lastQuoteKey = '';
         let cached = fromCache.get(category);
         if (!cached) {
-          setPill('from', '…', '/ day', true);
+          setPill(T.from, '…', T.perDay, true);
           try {
             const res: ApiResult = await fetch(`/api/quote?category=${encodeURIComponent(category)}`).then((r) => r.json());
             if (!res.ok) throw new Error(res.error);
@@ -1390,39 +1381,40 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
         }
         if (seq !== quoteSeq) return;
         if (cached.from == null) hidePill();
-        else setPill('from', `${cached.from}${cached.currencySymbol}`, '/ day');
+        else setPill(T.from, `${cached.from}${cached.currencySymbol}`, T.perDay);
         return;
       }
 
       // Avec dates : total réel pour N véhicules (tarifs saisonniers Worco)
       const key = params.toString();
       if (key === lastQuoteKey) return;
-      setPill('total', '…', null, true);
+      setPill(T.total, '…', null, true);
       try {
         const res: ApiResult = await fetch(`/api/quote?${params}`).then((r) => r.json());
         if (seq !== quoteSeq) return;
         if (!res.ok) {
           hidePill();
-          showMsg(String(res.error || 'Price unavailable right now.'), 'error', 'quote');
+          showMsg(T.priceUnavailable, 'error', 'quote');
           return;
         }
         lastQuoteKey = key;
         if (!res.enough) {
           hidePill();
           const n = Number(res.available);
-          const label = (vehicleLabel() + (n === 1 ? '' : 's'));
-          showMsg(n ? `Only ${n} ${label} available on these dates.` : `No ${label} available on these dates — please try other dates.`, 'error', 'quote');
+          const [one, many] = vehicleLabel();
+          showMsg(fill(n === 0 ? T.none : n === 1 ? T.onlyOne : T.onlyMany, { n, one, many }), 'error', 'quote');
           return;
         }
         clearMsg('quote');
-        setPill('total', `${res.total}${res.currencySymbol || '$'}`, null);
+        setPill(T.total, `${res.total}${res.currencySymbol || '$'}`, null);
       } catch {
         if (seq === quoteSeq) hidePill();
       }
     }
 
-    function vehicleLabel() {
-      return ({ 'atv-rental': 'ATV', 'scooter-rental': 'scooter', 'mountain-bike-rental': 'mountain bike' } as Record<string, string>)[catInput?.value || ''] || 'vehicle';
+    /** [singulier, pluriel] du véhicule de l'onglet actif, dans la langue de la page. */
+    function vehicleLabel(): [string, string] {
+      return T.vehicles[catInput?.value || ''] || T.vehicles.default;
     }
 
     function updatePrice() {
@@ -1430,7 +1422,7 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
         window.clearTimeout(quoteTimer);
         quoteSeq++; // annule une requête de location en cours
         const total = tourTotal();
-        total ? setPill('total', `${total}$`, null) : hidePill();
+        total ? setPill(T.total, `${total}$`, null) : hidePill();
         return;
       }
       if (rentalsViaWhatsApp()) {
@@ -1531,9 +1523,9 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
     }
 
     function validateContact(data: Record<string, string>) {
-      if ((data.name || '').trim().length < 2) return invalid('name', 'Please enter your full name.'), false;
-      if (!EMAIL_RE.test((data.email || '').trim())) return invalid('email', 'Please enter a valid email address.'), false;
-      if ((data.phone || '').replace(/\D/g, '').length < 6) return invalid('phone', 'Please enter a valid phone number.'), false;
+      if ((data.name || '').trim().length < 2) return invalid('name', T.invalidName), false;
+      if (!EMAIL_RE.test((data.email || '').trim())) return invalid('email', T.invalidEmail), false;
+      if ((data.phone || '').replace(/\D/g, '').length < 6) return invalid('phone', T.invalidPhone), false;
       return true;
     }
 
@@ -1541,7 +1533,7 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
       busy = on;
       if (!submitBtn) return;
       submitBtn.disabled = on;
-      submitBtn.textContent = on ? 'Sending…' : 'Request reservation';
+      submitBtn.textContent = on ? T.sending : T.submit;
     }
 
     /** Ouvre WhatsApp vers l'agence avec un message pré-rempli. Renvoie le lien (pour le lien de secours). */
@@ -1557,12 +1549,14 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
       return href;
     }
 
+    // Message WhatsApp dans la langue du client (c'est lui qui l'envoie)
+    const WA = T.wa;
     const contactLines = (data: Record<string, string>) => [
-      `Name: ${data.name.trim()}`,
-      `Email: ${data.email.trim()}`,
-      `Phone: ${data.phone.trim()}`,
-      data.whatsapp?.trim() ? `WhatsApp: ${data.whatsapp.trim()}` : null,
-      data.message?.trim() ? `Message: ${data.message.trim()}` : null,
+      WA.name + data.name.trim(),
+      WA.email + data.email.trim(),
+      WA.phone + data.phone.trim(),
+      data.whatsapp?.trim() ? WA.whatsapp + data.whatsapp.trim() : null,
+      data.message?.trim() ? WA.message + data.message.trim() : null,
     ];
 
     // ATV Tour (hors Worco)
@@ -1570,15 +1564,15 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
       const tourInput = form!.querySelector<HTMLInputElement>('input[name="tour"]:checked');
       const tourName = tourInput?.closest('.tour-card')?.querySelector('.tour-card__name')?.textContent || data.tour;
       const departure = field<HTMLSelectElement>('departureTime');
-      const riders = data.ridersPerQuad === '1' ? '1 rider' : '2 riders';
+      const riders = data.ridersPerQuad === '1' ? T.rider1 : T.riders2;
       return openWhatsApp([
-        `Hello Cactus! I'd like to book an ATV tour 🌵`,
+        WA.helloTour,
         ``,
-        `Tour: ${tourName}`,
-        `Date: ${fmt(sel.start!)}`,
-        `Departure: ${departure?.selectedOptions[0]?.textContent || data.departureTime}`,
-        `Quads: ${data.quads} (${riders} per quad)`,
-        `Estimated total: ${tourTotal()}$`,
+        WA.tour + tourName,
+        WA.date + fmt(sel.start!),
+        WA.departure + (departure?.selectedOptions[0]?.textContent || data.departureTime),
+        fill(WA.quads, { q: data.quads, riders }),
+        `${WA.total}${tourTotal()}$`,
         ``,
         ...contactLines(data),
       ]);
@@ -1588,42 +1582,39 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
     function sendRentalViaWhatsApp(data: Record<string, string>) {
       const key = `rental-wa:${JSON.stringify({ ...data, s: sel.start && iso(sel.start), e: sel.end && iso(sel.end) })}`;
       if (key === lastSentKey) {
-        showMsg('This request has already been sent — we’ll get back to you shortly.', 'success');
+        showMsg(T.alreadySent, 'success');
         return;
       }
       const activity = root.querySelector('.cat-tab.is-active')?.textContent?.trim() || 'Rental';
       const pickup = field<HTMLSelectElement>('pickupTime');
       const href = openWhatsApp([
-        `Hello Cactus! I'd like to book a rental 🌵`,
+        WA.helloRental,
         ``,
-        `Activity: ${activity}`,
-        `Pick-up: ${fmt(sel.start!)} at ${pickup?.selectedOptions[0]?.textContent || data.pickupTime}`,
-        `Return: ${fmt(sel.end!)}`,
-        `Number of vehicles: ${data.vehicles}`,
+        WA.activity + activity,
+        fill(WA.pickup, { date: fmt(sel.start!), time: pickup?.selectedOptions[0]?.textContent || data.pickupTime }),
+        WA.return + fmt(sel.end!),
+        WA.vehicles + data.vehicles,
         ``,
         ...contactLines(data),
       ]);
       lastSentKey = key;
-      showMsg('WhatsApp is opening with your rental request — just press send and we’ll confirm availability and price shortly.', 'success', 'submit', {
-        href,
-        label: 'Didn’t open? Click here.',
-      });
+      showMsg(T.rentalWhatsApp, 'success', 'submit', { href, label: T.didntOpen });
     }
 
     // ATV Tour : WhatsApp ET email à Cactus, en même temps
     async function sendTourRequest(data: Record<string, string>) {
-      const payload = { ...data, date: iso(sel.start!) };
+      const payload = { ...data, date: iso(sel.start!), lang: T.lang };
       const key = `tour:${JSON.stringify(payload)}`;
       if (key === lastSentKey) {
-        showMsg('This request has already been sent — we’ll get back to you shortly.', 'success');
+        showMsg(T.alreadySent, 'success');
         return;
       }
 
       // 1. WhatsApp tout de suite (doit rester dans le clic de l'utilisateur)
       const waHref = openTourWhatsApp(data);
-      const waLink = { href: waHref, label: 'Didn’t open? Click here.' };
+      const waLink = { href: waHref, label: T.didntOpen };
       setBusy(true);
-      showMsg('WhatsApp is opening — we’re also sending your request by email…', 'success', 'submit', waLink);
+      showMsg(T.tourSending, 'success', 'submit', waLink);
 
       // 2. Email à Cactus (serveur)
       try {
@@ -1634,19 +1625,19 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
         }).then((r) => r.json());
         if (res.ok) {
           lastSentKey = key;
-          const ref = res.ref ? ` (ref ${res.ref})` : '';
+          const ref = res.ref ? fill(T.ref, { ref: String(res.ref) }) : '';
           if (res.mailSimulated && !import.meta.env.DEV) {
             // Email pas encore configuré en ligne : on n'annonce que WhatsApp
-            showMsg('WhatsApp is opening with your tour request — just press send and we’ll confirm shortly.', 'success', 'submit', waLink);
+            showMsg(T.tourWhatsAppOnly, 'success', 'submit', waLink);
           } else {
-            const test = res.mailSimulated ? ' (test mode — the email was not really sent)' : '';
-            showMsg(`Your tour request has been emailed to Cactus${ref}. Press send in WhatsApp too, and we’ll confirm shortly.${test}`, 'success', 'submit', waLink);
+            const test = res.mailSimulated ? T.testEmail : '';
+            showMsg(fill(T.tourEmailed, { ref }) + test, 'success', 'submit', waLink);
           }
         } else {
-          showMsg(`${res.error || 'We couldn’t email your request.'} Please send it on WhatsApp.`, 'error', 'submit', waLink);
+          showMsg(T.emailFailed, 'error', 'submit', waLink);
         }
       } catch {
-        showMsg('We couldn’t email your request — please send it on WhatsApp.', 'error', 'submit', waLink);
+        showMsg(T.emailFailed, 'error', 'submit', waLink);
       } finally {
         setBusy(false);
       }
@@ -1658,7 +1649,7 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
 
       const missingDate = kind === 'tour' ? !sel.start : !sel.start || !sel.end;
       if (missingDate) {
-        showMsg(kind === 'tour' ? 'Please pick your tour date.' : 'Please pick your start and end dates.', 'error');
+        showMsg(kind === 'tour' ? T.pickTourDate : T.pickDates, 'error');
         const field: DateField = kind === 'tour' ? 'single' : !sel.start ? 'start' : 'end';
         dateInputs[field]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         openPicker(field);
@@ -1684,10 +1675,11 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
         startDate: iso(sel.start!),
         endDate: iso(sel.end!),
         vehicles: Math.max(1, parseInt(data.vehicles || '1', 10) || 1),
+        lang: T.lang,
       };
       const key = JSON.stringify(payload);
       if (key === lastSentKey) {
-        showMsg('This request has already been sent — we’ll get back to you shortly.', 'success');
+        showMsg(T.alreadySent, 'success');
         return;
       }
 
@@ -1702,18 +1694,19 @@ const rentalsVia = worcoMode === 'off' ? 'whatsapp' : 'worco';
         if (res.ok) {
           lastSentKey = key;
           const orders = (res.orders as string[]) || [];
-          const refs = orders.length ? ` Your reference${orders.length > 1 ? 's' : ''}: ${orders.join(', ')}.` : '';
-          const test = res.mock ? ' (test mode — no real booking was created)' : '';
-          showMsg(`Request sent!${refs} We’ll confirm your reservation shortly. Payment in cash at pick-up.${test}`, 'success');
+          const refs = orders.length ? fill(orders.length > 1 ? T.refMany : T.refOne, { refs: orders.join(', ') }) : '';
+          const test = res.mock ? T.testBooking : '';
+          showMsg(fill(T.requestSent, { refs }) + test, 'success');
         } else {
-          showMsg(String(res.error || 'Something went wrong. Please try again.'), 'error');
+          // Messages du serveur en anglais : dans les autres langues, message générique traduit
+          showMsg(T.lang === 'en' && res.error ? String(res.error) : T.genericError, 'error');
           if (res.code === 'not_enough' || res.code === 'partial') {
             lastQuoteKey = '';
             updatePrice(); // rafraîchit prix et disponibilité
           }
         }
       } catch {
-        showMsg('Network error — please check your connection and try again, or contact us on WhatsApp.', 'error');
+        showMsg(T.networkError, 'error');
       } finally {
         setBusy(false);
       }

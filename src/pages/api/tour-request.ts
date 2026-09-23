@@ -1,6 +1,6 @@
 // POST /api/tour-request — demande d'ATV Tour (hors Worco) → email à Cactus.
 // Le navigateur ouvre EN MÊME TEMPS WhatsApp avec le même contenu : l'agence reçoit les deux.
-// Corps JSON : tour, date, departureTime, quads, ridersPerQuad, name, email, phone, whatsapp?, message?
+// Corps JSON : tour, date, departureTime, quads, ridersPerQuad, name, email, phone, whatsapp?, message?, lang?
 import type { APIRoute } from 'astro';
 import { TOURS, TOUR_DEPARTURE_HOURS, toTimeOption } from '../../data/tours';
 import { parseContact, RentalError } from '../../lib/rental';
@@ -55,6 +55,7 @@ export const POST: APIRoute = async ({ request }) => {
       ['Phone', c.phone],
       ...(c.whatsapp ? ([['WhatsApp', c.whatsapp]] as [string, string][]) : []),
       ...(c.message ? ([['Message', c.message]] as [string, string][]) : []),
+      ['Customer language', c.language],
       ['Reference', ref],
     ];
 

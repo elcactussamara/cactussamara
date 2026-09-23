@@ -1,35 +1,47 @@
 ---
 import Button from './Button.astro';
+import LangSwitcher from './LangSwitcher.astro';
+import { homeHref, useT } from '../i18n';
 
+const t = useT(Astro.currentLocale);
+const home = (hash: string) => homeHref(Astro.currentLocale, hash);
 const links = [
-  { label: 'Services', href: '/#services' },
-  { label: 'Availability', href: '/#booking' },
-  { label: 'Find Us', href: '/#contact' },
+  { id: 'services', label: t.nav.services, href: home('#services') },
+  { id: 'booking', label: t.nav.availability, href: home('#booking') },
+  { id: 'contact', label: t.nav.findUs, href: home('#contact') },
 ];
 ---
 
 <header class="navbar" id="top">
   <div class="navbar__inner">
-    <button class="navbar__burger" aria-label="Open menu" aria-expanded="false" data-burger>
+    <button class="navbar__burger" aria-label={t.nav.openMenu} aria-expanded="false" data-burger>
       <span></span><span></span><span></span>
     </button>
 
     <nav class="navbar__links">
-      {links.map((l) => <a href={l.href}>{l.label}</a>)}
+      {links.map((l) => (
+        <>
+          {l.id === 'contact' && <LangSwitcher />}
+          <a href={l.href}>{l.label}</a>
+        </>
+      ))}
     </nav>
 
-    <a href="/#top" class="navbar__logo" aria-label="Cactus — home">
+    <a href={home('#top')} class="navbar__logo" aria-label={t.nav.homeAria}>
       <img src="/logos/navbar-logo.webp" alt="Cactus" width="115" height="50" />
     </a>
 
     <div class="navbar__cta">
-      <Button href="/#booking">Book Your Adventure</Button>
+      <Button href={home('#booking')}>{t.nav.book}</Button>
     </div>
   </div>
 
   <!-- Menu mobile déroulant -->
   <div class="navbar__mobile" data-mobile-menu hidden>
     {links.map((l) => <a href={l.href} data-mobile-link>{l.label}</a>)}
+    <div class="navbar__mobile-lang">
+      <LangSwitcher variant="inline" />
+    </div>
   </div>
 </header>
 
@@ -131,16 +143,20 @@ const links = [
   .navbar__mobile a:hover {
     color: var(--color-orange);
   }
+  .navbar__mobile-lang {
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+  }
 
   /* ---------- Mobile ---------- */
   @media (max-width: 900px) {
     .navbar {
       height: 64px;
     }
-    /* Maquette mobile : menu à gauche, bouton à droite, pas de logo */
+    /* Mobile : menu à gauche, logo au milieu, bouton à droite */
     .navbar__inner {
-      grid-template-columns: auto auto;
-      justify-content: space-between;
+      grid-template-columns: auto 1fr auto;
       padding-inline: 24px;
       gap: 16px;
     }
@@ -151,7 +167,10 @@ const links = [
       display: flex;
     }
     .navbar__logo {
-      display: none;
+      justify-self: center;
+    }
+    .navbar__logo img {
+      width: 66px;
     }
     /* Bouton compact 152×39 (Figma) */
     .navbar__cta :global(.btn) {

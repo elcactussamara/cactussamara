@@ -14,7 +14,10 @@ export type RentalRequest = {
   vehicles: number;
 };
 
-export type ContactInfo = { name: string; email: string; phone: string; whatsapp?: string; message?: string };
+export type ContactInfo = { name: string; email: string; phone: string; whatsapp?: string; message?: string; language: string };
+
+/** Langue du site utilisée par le client (pour lui répondre dans sa langue). */
+const LANGUAGES: Record<string, string> = { en: 'English', es: 'Spanish', fr: 'French' };
 
 /** Erreur « métier » renvoyée telle quelle au navigateur (code + message lisible). */
 export class RentalError extends Error {
@@ -51,6 +54,7 @@ export function parseContact(input: Record<string, unknown>): ContactInfo {
     phone: clean(input.phone, 40),
     whatsapp: clean(input.whatsapp, 40),
     message: clean(input.message, 1000),
+    language: LANGUAGES[String(input.lang ?? '')] ?? LANGUAGES.en,
   };
   if (contact.name.length < 2) throw new RentalError(400, 'validation', 'Please enter your full name.');
   if (!EMAIL_RE.test(contact.email)) throw new RentalError(400, 'validation', 'Please enter a valid email address.');
@@ -125,6 +129,7 @@ export async function bookRental(r: RentalRequest, contact: ContactInfo) {
     const note = [
       `[Website] ${label} rental — vehicle ${orders.length + 1}/${r.vehicles} — ref ${groupRef}`,
       `Pick-up ${r.pickupTime}, return by ${RETURN_TIME} (Costa Rica time). Payment in cash at pick-up.`,
+      `Customer language: ${contact.language}`,
       contact.message ? `Customer message: ${contact.message}` : '',
     ]
       .filter(Boolean)

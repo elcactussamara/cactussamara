@@ -1,21 +1,18 @@
 ---
-const year = new Date().getFullYear();
+import { homeHref, pageHref, useT } from '../i18n';
 
-const hours = [
-  { day: 'Monday', time: '08:00 – 16:30' },
-  { day: 'Tuesday', time: '08:00 – 16:30' },
-  { day: 'Wednesday', time: '08:00 – 16:30' },
-  { day: 'Thursday', time: '08:00 – 16:30' },
-  { day: 'Friday', time: '08:00 – 16:30' },
-  { day: 'Saturday', time: '08:00 – 16:30' },
-  { day: 'Sunday', time: 'Closed' },
-];
+const t = useT(Astro.currentLocale);
+const year = new Date().getFullYear();
+const home = (hash: string) => homeHref(Astro.currentLocale, hash);
+
+// Horaires (lundi → dimanche), jours traduits dans src/i18n/ui.ts
+const hours = t.footer.days.map((day, i) => ({ day, time: i === 6 ? t.footer.closed : '08:00 – 16:30' }));
 
 const navLinks = [
-  { label: 'Home', href: '/#top' },
-  { label: 'Services', href: '/#services' },
-  { label: 'Availability', href: '/#booking' },
-  { label: 'Find Us', href: '/#contact' },
+  { label: t.nav.home, href: home('#top') },
+  { label: t.nav.services, href: home('#services') },
+  { label: t.nav.availability, href: home('#booking') },
+  { label: t.nav.findUs, href: home('#contact') },
 ];
 ---
 
@@ -25,18 +22,18 @@ const navLinks = [
       <!-- Address & contact -->
       <div class="footer__col">
         <div class="footer__group">
-          <h4 class="footer__label">Address</h4>
+          <h4 class="footer__label">{t.footer.addressLabel}</h4>
           <p class="footer__text">
-            100 meters west of the National Bank, C. Diego,<br />
-            Guanacaste Province, Sámara, 50205
+            {t.footer.addressLines[0]}<br />
+            {t.footer.addressLines[1]}
           </p>
         </div>
         <div class="footer__group">
-          <h4 class="footer__label">Contact</h4>
+          <h4 class="footer__label">{t.footer.contactLabel}</h4>
           <p class="footer__text">
             <a href="tel:+50683896565">83 89 65 65</a><br />
             <a href="mailto:elcactussamara2022@gmail.com">elcactussamara2022@gmail.com</a><br />
-            <a href="https://wa.me/50683896565" target="_blank" rel="noopener">Chat on WhatsApp</a>
+            <a href="https://wa.me/50683896565" target="_blank" rel="noopener">{t.footer.whatsapp}</a>
           </p>
         </div>
         <div class="footer__social footer__social--desktop">
@@ -57,7 +54,7 @@ const navLinks = [
 
       <!-- Opening hours -->
       <div class="footer__col">
-        <h4 class="footer__label">Opening Hours</h4>
+        <h4 class="footer__label">{t.footer.hoursLabel}</h4>
         <ul class="footer__hours">
           {hours.map((h) => (
             <li>
@@ -98,12 +95,12 @@ const navLinks = [
 
     <div class="footer__credits">
       <p class="footer__copy">
-        © {year} Cactus. All rights reserved.
-        <span class="footer__devline">Developed by <a href="https://webdiiv.com" target="_blank" rel="noopener" class="footer__dev">Webdiiv</a></span>
+        © {year} Cactus. {t.footer.rights}
+        <span class="footer__devline">{t.footer.developedBy} <a href="https://webdiiv.com" target="_blank" rel="noopener" class="footer__dev">Webdiiv</a></span>
       </p>
       <div class="footer__legal">
-        <a href="/privacy">Privacy</a>
-        <a href="/terms">Terms of Use</a>
+        <a href={pageHref(Astro.currentLocale, 'privacy')}>{t.footer.privacy}</a>
+        <a href={pageHref(Astro.currentLocale, 'terms')}>{t.footer.terms}</a>
       </div>
     </div>
   </div>

@@ -1,0 +1,214 @@
+---
+// Sélecteur de langue (drapeaux) — desktop : menu déroulant dans la nav ; mobile : rangée dans le menu burger.
+// Chaque lien mène à la même page dans l'autre langue (/privacy → /es/privacy).
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { useT } from '../i18n';
+
+interface Props {
+  variant?: 'dropdown' | 'inline';
+}
+const { variant = 'dropdown' } = Astro.props;
+
+const LANGS = [
+  { code: 'en', short: 'EN', label: 'English' },
+  { code: 'es', short: 'ES', label: 'Español' },
+  { code: 'fr', short: 'FR', label: 'Français' },
+] as const;
+
+const t = useT(Astro.currentLocale);
+const current = LANGS.find((l) => l.code === Astro.currentLocale) ?? LANGS[0];
+// Chemin de la page sans préfixe de langue
+const path = Astro.url.pathname.replace(/^\/(es|fr)(?=\/|$)/, '').replace(/^\//, '');
+const hrefFor = (code: string) => getRelativeLocaleUrl(code, path);
+---
+
+{variant === 'dropdown' ? (
+  <div class="lang" data-lang>
+    <button
+      type="button"
+      class="lang__trigger"
+      aria-haspopup="true"
+      aria-expanded="false"
+      aria-label={`${t.nav.language}: ${current.label}`}
+      data-lang-trigger
+    >
+      <span class={`flag flag--${current.code}`} aria-hidden="true"></span>
+      <span>{current.short}</span>
+      <svg class="lang__chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+        <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <ul class="lang__menu" data-lang-menu hidden>
+      {LANGS.map((l) => (
+        <li>
+          <a
+            href={hrefFor(l.code)}
+            hreflang={l.code}
+            lang={l.code}
+            class:list={['lang__item', { 'is-current': l.code === current.code }]}
+            aria-current={l.code === current.code ? 'true' : undefined}
+          >
+            <span class={`flag flag--${l.code}`} aria-hidden="true"></span>
+            {l.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+) : (
+  <div class="lang-inline" role="group" aria-label={t.nav.language}>
+    {LANGS.map((l) => (
+      <a
+        href={hrefFor(l.code)}
+        hreflang={l.code}
+        lang={l.code}
+        class:list={['lang-inline__item', { 'is-current': l.code === current.code }]}
+        aria-current={l.code === current.code ? 'true' : undefined}
+      >
+        <span class={`flag flag--${l.code}`} aria-hidden="true"></span>
+        {l.short}
+      </a>
+    ))}
+  </div>
+)}
+
+<style>
+  /* Drapeaux dessinés en CSS (les émojis drapeaux ne s'affichent pas sur Windows) */
+  .flag {
+    display: inline-block;
+    flex: none;
+    width: 22px;
+    height: 15px;
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+  }
+  .flag--en {
+    /* États-Unis : 13 bandes rouges/blanches + canton bleu */
+    background:
+      linear-gradient(#3c3b6e, #3c3b6e) 0 0 / 45% 54% no-repeat,
+      repeating-linear-gradient(#b22234 0 7.69%, #fff 7.69% 15.38%);
+  }
+  .flag--es {
+    background: linear-gradient(#aa151b 0 25%, #f1bf00 25% 75%, #aa151b 75%);
+  }
+  .flag--fr {
+    background: linear-gradient(90deg, #002395 0 33.34%, #fff 33.34% 66.67%, #ed2939 66.67%);
+  }
+
+  /* ---------- Menu déroulant (desktop) ---------- */
+  .lang {
+    position: relative;
+  }
+  .lang__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-size: var(--fs-16);
+    color: var(--color-black);
+    transition: color 0.15s ease;
+  }
+  .lang__trigger:hover {
+    color: var(--color-orange);
+  }
+  .lang__trigger:focus-visible {
+    outline: 2px solid var(--color-black);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+  .lang__chevron {
+    transition: transform 0.2s ease;
+  }
+  .lang__trigger[aria-expanded='true'] .lang__chevron {
+    transform: rotate(180deg);
+  }
+  .lang__menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    min-width: 168px;
+    padding: 6px;
+    background-color: var(--color-cream);
+    border: 1px solid var(--color-sand-line);
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+    list-style: none;
+  }
+  .lang__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-family: var(--font-roboto);
+    font-size: var(--fs-16);
+    color: var(--color-black);
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+  }
+  .lang__item:hover,
+  .lang__item:focus-visible {
+    background-color: var(--color-sand);
+    outline: none;
+  }
+  .lang__item.is-current {
+    font-weight: 400;
+  }
+  .lang__item.is-current::after {
+    content: '';
+    margin-left: auto;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--color-orange);
+  }
+
+  /* ---------- Rangée (menu mobile) ---------- */
+  .lang-inline {
+    display: flex;
+    gap: 8px;
+  }
+  .lang-inline__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-sand-line);
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-size: var(--fs-14);
+    color: var(--color-black);
+  }
+  .lang-inline__item.is-current {
+    border-color: var(--color-orange);
+    color: var(--color-orange);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-lang]').forEach((root) => {
+    const trigger = root.querySelector<HTMLButtonElement>('[data-lang-trigger]');
+    const menu = root.querySelector<HTMLElement>('[data-lang-menu]');
+    if (!trigger || !menu) return;
+
+    const setOpen = (open: boolean) => {
+      menu.hidden = !open;
+      trigger.setAttribute('aria-expanded', String(open));
+    };
+    trigger.addEventListener('click', () => setOpen(menu.hidden));
+    document.addEventListener('click', (e) => {
+      if (!root.contains(e.target as Node)) setOpen(false);
+    });
+    root.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !menu.hidden) {
+        setOpen(false);
+        trigger.focus();
+      }
+    });
+    root.addEventListener('focusout', (e) => {
+      if (!root.contains(e.relatedTarget as Node)) setOpen(false);
+    });
+  });
+</script>

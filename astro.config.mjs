@@ -8,6 +8,12 @@ export default defineConfig({
   // Pages statiques (output par défaut) ; seules les routes /api/* tournent côté serveur
   // (`export const prerender = false`) — elles détiennent la clé API Worco.
   adapter: vercel(),
+  // Langues : anglais à la racine (/), espagnol sous /es/, français sous /fr/
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en', 'es', 'fr'],
+    routing: { prefixDefaultLocale: false },
+  },
   env: {
     schema: {
       // `secret` + `server` : lues à l'exécution, jamais incluses dans le code envoyé au navigateur.

@@ -3,6 +3,7 @@
 import Base from './Base.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
+import { useT } from '../i18n';
 
 interface Props {
   title: string;
@@ -11,15 +12,16 @@ interface Props {
 }
 
 const { title, description, updated } = Astro.props;
+const t = useT(Astro.currentLocale);
 ---
 
 <Base title={`${title} — Cactus Sámara`} description={description}>
   <Navbar />
   <main class="legal">
     <header class="legal__head">
-      <p class="legal__eyebrow">Legal</p>
+      <p class="legal__eyebrow">{t.legal.eyebrow}</p>
       <h1 class="legal__title">{title}</h1>
-      <p class="legal__updated">Last updated: {updated}</p>
+      <p class="legal__updated">{t.legal.updated} {updated}</p>
     </header>
     <article class="legal__body">
       <slot />
