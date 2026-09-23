@@ -4,7 +4,7 @@ import vercel from '@astrojs/vercel';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://www.cactussamara.com', // domaine principal (cactussamara.com redirige ici, réglage Vercel)
+  site: 'https://cactussamara.com', // domaine principal (www.cactussamara.com redirige ici, réglage Vercel)
   // Pages statiques (output par défaut) ; seules les routes /api/* tournent côté serveur
   // (`export const prerender = false`) — elles détiennent la clé API Worco.
   adapter: vercel(),
