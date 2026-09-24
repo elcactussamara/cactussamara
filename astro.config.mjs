@@ -8,6 +8,8 @@ export default defineConfig({
   // Pages statiques (output par défaut) ; seules les routes /api/* tournent côté serveur
   // (`export const prerender = false`) — elles détiennent la clé API Worco.
   adapter: vercel(),
+  // Astro 7 : garde le comportement d'espacement d'avant (sinon « nos <a>Conditions</a> et » se colle en « nosConditions »)
+  compressHTML: true,
   // Langues : anglais à la racine (/), espagnol sous /es/, français sous /fr/
   i18n: {
     defaultLocale: 'en',
