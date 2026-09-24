@@ -1,0 +1,6 @@
+# Cactus Sámara — https://cactussamara.com
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://cactussamara.com/sitemap-index.xml

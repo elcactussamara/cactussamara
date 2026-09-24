@@ -5,16 +5,24 @@ import { LOCALES, getLocale, pageHref, useT } from '../i18n';
 interface Props {
   title?: string;
   description?: string;
+  /** Image d'aperçu (partage WhatsApp / Facebook…), chemin depuis /public — 1200×630 */
+  image?: string;
 }
 
 const locale = getLocale(Astro.currentLocale);
 const t = useT(locale);
-const { title = t.meta.title, description = t.meta.description } = Astro.props;
+const { title = t.meta.title, description = t.meta.description, image = '/og-image.jpg' } = Astro.props;
 
 // Versions de la même page dans les autres langues (référencement : hreflang)
 const path = Astro.url.pathname.replace(/^\/(es|fr)(?=\/|$)/, '').replace(/^\//, '');
 const site = Astro.site ?? new URL('https://cactussamara.com');
 const alternates = LOCALES.map((l) => ({ lang: l, href: new URL(pageHref(l, path), site).href }));
+// URL officielle de la page (même forme que les liens hreflang, avec « / » final)
+const canonical = alternates.find((a) => a.lang === locale)!.href;
+
+// Aperçus de partage (Open Graph / Twitter)
+const OG_LOCALE = { en: 'en_US', es: 'es_CR', fr: 'fr_FR' } as const;
+const ogImage = new URL(image, site).href;
 ---
 
 <!doctype html>
@@ -23,8 +31,27 @@ const alternates = LOCALES.map((l) => ({ lang: l, href: new URL(pageHref(l, path
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
     {alternates.map((a) => <link rel="alternate" hreflang={a.lang} href={a.href} />)}
     <link rel="alternate" hreflang="x-default" href={alternates[0].href} />
+    <meta name="theme-color" content="#fbf8ef" />
+
+    <!-- Aperçus de partage : WhatsApp, Facebook, Instagram, X… -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Cactus Sámara" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={OG_LOCALE[locale]} />
+    {LOCALES.filter((l) => l !== locale).map((l) => <meta property="og:locale:alternate" content={OG_LOCALE[l]} />)}
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={t.meta.ogImageAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
     <!-- Favicons : icône recadrée (remplit l'onglet). SVG = noir en thème clair, blanc en thème sombre. -->
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

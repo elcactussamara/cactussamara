@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig, envField } from 'astro/config';
 import vercel from '@astrojs/vercel';
+import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
@@ -10,6 +11,12 @@ export default defineConfig({
   adapter: vercel(),
   // Astro 7 : garde le comportement d'espacement d'avant (sinon « nos <a>Conditions</a> et » se colle en « nosConditions »)
   compressHTML: true,
+  // sitemap-index.xml (référencé dans public/robots.txt), avec les versions EN / ES / FR de chaque page
+  integrations: [
+    sitemap({
+      i18n: { defaultLocale: 'en', locales: { en: 'en', es: 'es', fr: 'fr' } },
+    }),
+  ],
   // Langues : anglais à la racine (/), espagnol sous /es/, français sous /fr/
   i18n: {
     defaultLocale: 'en',

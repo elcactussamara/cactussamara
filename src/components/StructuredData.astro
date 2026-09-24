@@ -1,0 +1,75 @@
+---
+// Données structurées (JSON-LD) : fiche « entreprise locale » lue par Google
+// (adresse, téléphone, horaires, réseaux, tours et prix). Ajoutée aux pages d'accueil.
+// Pas de coordonnées GPS : on ne les a pas (à ajouter si le client les fournit).
+import { TOURS } from '../data/tours';
+import { getLocale, homeHref, useT } from '../i18n';
+
+const locale = getLocale(Astro.currentLocale);
+const t = useT(locale);
+const site = Astro.site ?? new URL('https://cactussamara.com');
+const url = new URL(homeHref(locale), site).href;
+const abs = (path: string) => new URL(path, site).href;
+
+const business = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  '@id': abs('/#business'),
+  name: 'El Cactus Services',
+  alternateName: 'Cactus Sámara — Adventure & Rental',
+  description: t.meta.description,
+  url,
+  logo: abs('/logos/logo-cactus.png'),
+  image: [abs('/og-image.jpg'), abs('/images/explore/atv-tour.jpg'), abs('/images/explore/atv-rental.jpg')],
+  telephone: '+50683896565',
+  email: 'elcactussamara2022@gmail.com',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: '100 m west of the Banco Nacional, C. Diego',
+    addressLocality: 'Sámara',
+    addressRegion: 'Guanacaste',
+    postalCode: '50205',
+    addressCountry: 'CR',
+  },
+  areaServed: 'Sámara, Guanacaste, Costa Rica',
+  openingHoursSpecification: [
+    {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+      opens: '08:00',
+      closes: '16:30',
+    },
+  ],
+  currenciesAccepted: 'USD',
+  paymentAccepted: 'Cash',
+  priceRange: '$$',
+  sameAs: [
+    'https://www.instagram.com/elcactus_rental_samara/',
+    'https://www.facebook.com/people/El-Cactus-Services/61585553481709/',
+  ],
+  // Tours guidés : prix par quad (1 personne) — même source que le formulaire (src/data/tours.ts)
+  makesOffer: TOURS.map((tour) => ({
+    '@type': 'Offer',
+    price: tour.prices[1],
+    priceCurrency: 'USD',
+    itemOffered: {
+      '@type': 'TouristTrip',
+      name: t.booking.tourNames[tour.id as keyof typeof t.booking.tourNames] ?? tour.name,
+      description: tour.stops,
+    },
+  })),
+};
+
+const website = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Cactus Sámara',
+  url,
+  inLanguage: locale,
+  publisher: { '@id': abs('/#business') },
+};
+
+const json = JSON.stringify([business, website]).replace(/</g, '\\u003c');
+---
+
+<script type="application/ld+json" set:html={json} />

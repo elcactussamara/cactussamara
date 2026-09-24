@@ -8,6 +8,7 @@
 
 const en = {
   meta: {
+    ogImageAlt: 'Cactus Adventure & Rental — ATV tour on a jungle road in Sámara, Costa Rica',
     title: 'Cactus — ATV Tours & Rentals in Sámara, Costa Rica',
     description:
       'Guided ATV tours and ATV, scooter and mountain bike rentals in Sámara, Costa Rica. Explore the beaches, mountains and trails of Guanacaste with Cactus.',
@@ -242,6 +243,7 @@ export type Dict = typeof en;
 
 const es: Dict = {
   meta: {
+    ogImageAlt: 'Cactus Adventure & Rental — tour en cuadraciclo por un camino de selva en Sámara, Costa Rica',
     title: 'Cactus — Tours y alquiler de cuadraciclos en Sámara, Costa Rica',
     description:
       'Tours guiados en cuadraciclo y alquiler de cuadraciclos, scooters y bicicletas de montaña en Sámara, Costa Rica. Explora las playas, montañas y senderos de Guanacaste con Cactus.',
@@ -472,6 +474,7 @@ const es: Dict = {
 
 const fr: Dict = {
   meta: {
+    ogImageAlt: 'Cactus Adventure & Rental — tour en quad sur une piste dans la jungle à Sámara, Costa Rica',
     title: 'Cactus — Tours et location de quads à Sámara, Costa Rica',
     description:
       'Tours guidés en quad et location de quads, scooters et VTT à Sámara, Costa Rica. Explorez les plages, les montagnes et les sentiers du Guanacaste avec Cactus.',
