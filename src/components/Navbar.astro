@@ -19,12 +19,8 @@ const links = [
     </button>
 
     <nav class="navbar__links">
-      {links.map((l) => (
-        <>
-          {l.id === 'contact' && <LangSwitcher />}
-          <a href={l.href}>{l.label}</a>
-        </>
-      ))}
+      {links.map((l) => <a href={l.href}>{l.label}</a>)}
+      <LangSwitcher />
     </nav>
 
     <a href={home('#top')} class="navbar__logo" aria-label={t.nav.homeAria}>
@@ -74,6 +70,7 @@ const links = [
     color: var(--color-black);
   }
   .navbar__links a {
+    white-space: nowrap;
     transition: color 0.15s ease;
   }
   .navbar__links a:hover {
@@ -147,6 +144,19 @@ const links = [
     margin-top: 8px;
     padding-top: 16px;
     border-top: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  /* Desktop étroit (libellés ES/FR plus longs) : on resserre pour garder une seule ligne
+     et le logo bien centré */
+  @media (max-width: 1200px) {
+    .navbar__inner {
+      padding-inline: 32px;
+      gap: 24px;
+    }
+    .navbar__links {
+      gap: 16px;
+      font-size: var(--fs-14);
+    }
   }
 
   /* ---------- Mobile ---------- */
